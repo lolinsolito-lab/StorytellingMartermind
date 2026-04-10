@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Ingegneria della Narrativa — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07070c;--s1:#0c0c14;--s2:#11111a;--s3:#161620;--s4:#1c1c28;
+  --gold:#c9a84c;--gold2:#e2c96d;--gold3:#f0dfa8;
+  --gold-glow:rgba(201,168,76,.08);--gold-dim:rgba(201,168,76,.15);
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,.1);
+  --blue:#60a5fa;--blue-dim:rgba(96,165,250,.1);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,.1);
+  --coral:#fb923c;--coral-dim:rgba(251,146,60,.1);
+  --green:#4ade80;--green-dim:rgba(74,222,128,.1);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.1);
+  --red:#f87171;--red-dim:rgba(248,113,113,.1);
+  --text:#eeeae0;--text2:#9a9690;--text3:#5a5752;--text4:#2e2c2a;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);--border3:rgba(255,255,255,.15);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── ROLE SWITCHER ── */
+.role-bar{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:36px;background:var(--s1);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  padding:0 20px;
+}
+.role-btn{
+  padding:4px 16px;border-radius:100px;font-size:11px;
+  font-family:'DM Mono',monospace;letter-spacing:.06em;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--text3);cursor:pointer;transition:all .2s;
+}
+.role-btn.active{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:500}
+.role-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-right:8px;letter-spacing:.08em}
+
+/* ── APP SHELL ── */
+.shell{display:flex;height:calc(100vh - 36px);margin-top:36px;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:240px;min-width:240px;background:var(--s1);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:width .3s ease;
+}
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.sb-logo{
+  font-family:'Cormorant Garamond',serif;font-size:14px;
+  font-weight:600;color:var(--gold);letter-spacing:.06em;
+  margin-bottom:4px;line-height:1.2;
+}
+.sb-user{display:flex;align-items:center;gap:8px;margin-top:10px}
+.sb-avatar{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--gold-dim);border:1px solid var(--gold-dim);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);flex-shrink:0;
+}
+.sb-user-info{}
+.sb-user-name{font-size:12px;font-weight:500;color:var(--text);line-height:1.2}
+.sb-user-plan{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+
+.sb-progress{padding:12px 16px;border-bottom:1px solid var(--border)}
+.sbp-row{display:flex;justify-content:space-between;margin-bottom:5px}
+.sbp-label{font-size:10px;color:var(--text3)}
+.sbp-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold)}
+.sbp-track{height:3px;background:var(--border2);border-radius:2px;overflow:hidden}
+.sbp-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .8s ease}
+
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-group{padding:10px 16px 4px;font-size:9px;color:var(--text4);letter-spacing:.14em;text-transform:uppercase;font-family:'DM Mono',monospace}
+.nav-item{
+  display:flex;align-items:center;gap:9px;padding:8px 16px;
+  cursor:pointer;transition:all .15s;border-left:2px solid transparent;
+  position:relative;
+}
+.nav-item:hover{background:var(--s2)}
+.nav-item.active{background:var(--s2);border-left-color:var(--gold)}
+.nav-item.active .ni-label{color:var(--text)}
+.ni-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.ni-label{font-size:12px;color:var(--text2);flex:1;transition:color .15s}
+.ni-badge{
+  font-family:'DM Mono',monospace;font-size:9px;
+  padding:2px 6px;border-radius:100px;
+}
+.ni-badge.done{background:var(--green-dim);color:var(--green)}
+.ni-badge.next{background:var(--blue-dim);color:var(--blue)}
+.ni-badge.warn{background:var(--amber-dim);color:var(--amber)}
+.ni-badge.new{background:var(--gold-dim);color:var(--gold)}
+
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.sb-streak{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.streak-icon{font-size:14px}
+.streak-text{font-size:11px;color:var(--text2)}
+.streak-n{color:var(--gold);font-weight:500}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{
+  height:48px;min-height:48px;
+  background:rgba(7,7,12,.9);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:12px;
+}
+.tb-breadcrumb{
+  display:flex;align-items:center;gap:6px;
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);
+}
+.tb-sep{color:var(--text4)}
+.tb-current{color:var(--text2)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-btn{
+  padding:5px 14px;border-radius:6px;font-size:11px;
+  font-family:'DM Mono',monospace;letter-spacing:.04em;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--text2);cursor:pointer;transition:all .15s;
+}
+.tb-btn:hover{background:var(--s3);border-color:var(--border3);color:var(--text)}
+.tb-btn.primary{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:500}
+.tb-btn.primary:hover{background:var(--gold2)}
+.tb-notif{
+  width:32px;height:32px;border-radius:8px;
+  border:1px solid var(--border2);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text3);font-size:14px;transition:all .15s;position:relative;
+}
+.tb-notif:hover{background:var(--s3);color:var(--text2)}
+.notif-dot{
+  position:absolute;top:6px;right:6px;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--gold);
+}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* ── VIEWS ── */
+.view{display:none}
+.view.active{display:block}
+
+/* CARDS */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.kpi{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:10px;padding:16px;position:relative;overflow:hidden;
+}
+.kpi::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--kpi-color,var(--gold));opacity:.6;
+}
+.kpi-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.kpi-value{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:400;color:var(--text);line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--text3)}
+.kpi-trend{
+  position:absolute;top:14px;right:14px;
+  font-family:'DM Mono',monospace;font-size:10px;
+  padding:2px 7px;border-radius:100px;
+}
+.kpi-trend.up{background:var(--green-dim);color:var(--green)}
+.kpi-trend.warn{background:var(--amber-dim);color:var(--amber)}
+
+/* MODULE CARDS */
+.modules-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.mod-card{
+  background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.mod-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--mc,var(--gold));opacity:.7;border-radius:0;
+}
+.mod-card:hover{background:var(--s3);border-color:var(--border2);transform:translateY(-1px)}
+.mod-card.locked{opacity:.45;cursor:default}
+.mod-card.locked:hover{transform:none}
+.mod-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.mod-num{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--mc,var(--gold));letter-spacing:.08em;
+}
+.mod-status-badge{margin-left:auto}
+.mod-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:17px;font-weight:400;color:var(--text);margin-bottom:4px;
+}
+.mod-sub{font-size:11px;color:var(--text3);margin-bottom:12px}
+.mod-prog-row{display:flex;justify-content:space-between;margin-bottom:4px}
+.mod-prog-label{font-size:10px;color:var(--text3)}
+.mod-prog-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--mc,var(--gold))}
+.mod-track{height:3px;background:var(--border2);border-radius:2px;overflow:hidden}
+.mod-fill{height:100%;border-radius:2px;background:var(--mc,var(--gold));transition:width 1s ease}
+.mod-lessons-row{display:flex;gap:4px;margin-top:10px}
+.mod-lesson-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--border2);transition:background .3s;flex-shrink:0;
+}
+.mod-lesson-dot.done{background:var(--mc,var(--gold))}
+.mod-lesson-dot.current{background:var(--mc,var(--gold));box-shadow:0 0 6px var(--mc,var(--gold))}
+
+/* LESSON LIST */
+.lesson-list{background:var(--s2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ll-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ll-title{font-size:13px;font-weight:500;color:var(--text)}
+.ll-sub{font-size:11px;color:var(--text3)}
+.lesson-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 18px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .15s;
+}
+.lesson-row:last-child{border-bottom:none}
+.lesson-row:hover{background:var(--s3)}
+.lesson-row.locked{opacity:.4;cursor:default}
+.lesson-row.locked:hover{background:transparent}
+.lr-num{
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);
+  min-width:32px;
+}
+.lr-icon{
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;flex-shrink:0;
+  border:1px solid var(--border2);background:var(--s3);color:var(--text3);
+}
+.lr-icon.done{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.lr-icon.current{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.lr-content{flex:1}
+.lr-title{font-size:13px;color:var(--text);margin-bottom:2px}
+.lr-sub{font-size:11px;color:var(--text3)}
+.lr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.lr-dur{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)}
+
+/* STATUS PILL */
+.pill{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 8px;border-radius:100px;
+  font-family:'DM Mono',monospace;font-size:10px;
+}
+.pill.done{background:var(--green-dim);color:var(--green)}
+.pill.current{background:var(--gold-dim);color:var(--gold)}
+.pill.locked{background:var(--border);color:var(--text3)}
+.pill.next{background:var(--blue-dim);color:var(--blue)}
+.pill.todo{background:var(--border);color:var(--text3)}
+.pill.warn{background:var(--amber-dim);color:var(--amber)}
+.pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* TRACKER VIEW */
+.tracker-kpi{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
+.t-kpi{
+  background:var(--s2);border:1px solid var(--border);border-radius:8px;
+  padding:14px;text-align:center;
+}
+.t-kpi-n{
+  font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:400;
+  line-height:1;margin-bottom:4px;
+}
+.t-kpi-l{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.06em}
+
+.area-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.area-card{
+  background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:16px;
+}
+.area-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.area-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.area-name{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.area-pct{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+.area-track{height:4px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:12px}
+.area-fill{height:100%;border-radius:2px;transition:width 1.2s ease}
+.task-list{display:flex;flex-direction:column;gap:5px}
+.task-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:6px;background:var(--s3);
+  border:1px solid var(--border);
+}
+.task-check{
+  width:16px;height:16px;border-radius:4px;flex-shrink:0;
+  border:1px solid var(--border2);display:flex;align-items:center;
+  justify-content:center;font-size:9px;transition:all .2s;cursor:pointer;
+}
+.task-check.done{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.task-check.next{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
+.task-text{font-size:12px;color:var(--text2);flex:1;line-height:1.3}
+.task-text.done-text{color:var(--text3);text-decoration:line-through}
+
+/* PIPELINE / FLOW */
+.pipeline{display:flex;align-items:stretch;gap:2px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
+.pipe-stage{
+  flex:1;min-width:120px;background:var(--s2);border:1px solid var(--border);
+  border-radius:8px;padding:14px 12px;position:relative;
+}
+.pipe-stage.done{border-color:var(--green);background:rgba(74,222,128,.04)}
+.pipe-stage.active{border-color:var(--gold);background:var(--gold-glow)}
+.pipe-stage.blocked{border-color:var(--border);opacity:.5}
+.pipe-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.pipe-stage.done .pipe-label{color:var(--green)}
+.pipe-stage.active .pipe-label{color:var(--gold)}
+.pipe-stage.blocked .pipe-label{color:var(--text4)}
+.pipe-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.3}
+.pipe-file{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.pipe-arrow{
+  display:flex;align-items:center;color:var(--text4);
+  font-size:14px;padding:0 2px;flex-shrink:0;align-self:center;
+}
+
+/* PRIORITY TABLE */
+.ptable{width:100%;border-collapse:collapse}
+.ptable th{
+  text-align:left;padding:8px 12px;
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text3);border-bottom:1px solid var(--border);
+  font-weight:400;
+}
+.ptable td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ptable tr:last-child td{border-bottom:none}
+.ptable tr:hover td{background:rgba(255,255,255,.02)}
+.ptable-wrap{background:var(--s2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+
+/* EXERCISE VIEW */
+.ex-grid-view{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.ex-card-v{
+  background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:18px;display:flex;flex-direction:column;gap:8px;
+  cursor:pointer;transition:all .2s;
+}
+.ex-card-v:hover{background:var(--s3);border-color:var(--border2)}
+.ex-card-v.locked{opacity:.4;cursor:default}
+.ex-card-v.locked:hover{background:var(--s2);border-color:var(--border)}
+.ex-v-icon{font-size:20px}
+.ex-v-mod{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:.08em}
+.ex-v-name{font-size:13px;font-weight:500;color:var(--text)}
+.ex-v-desc{font-size:11px;color:var(--text3);line-height:1.5;flex:1}
+.ex-v-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+
+/* SECTION HEADER */
+.sec-hdr{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:14px;margin-top:22px;
+}
+.sec-hdr:first-child{margin-top:0}
+.sec-line{flex:1;height:1px;background:var(--border)}
+.sec-label{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+
+/* WELCOME BANNER */
+.welcome-banner{
+  background:var(--s2);border:1px solid var(--border);border-radius:12px;
+  padding:20px 24px;margin-bottom:20px;
+  display:flex;align-items:center;gap:20px;
+  position:relative;overflow:hidden;
+}
+.welcome-banner::before{
+  content:'';position:absolute;right:0;top:0;bottom:0;width:200px;
+  background:linear-gradient(to left,var(--gold-glow),transparent);
+}
+.wb-text{flex:1;position:relative;z-index:1}
+.wb-greeting{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:.1em;margin-bottom:4px}
+.wb-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text);margin-bottom:4px}
+.wb-title em{font-style:italic;color:var(--gold)}
+.wb-sub{font-size:12px;color:var(--text3);line-height:1.5}
+.wb-action{position:relative;z-index:1;flex-shrink:0}
+
+/* ANIMATIONS */
+@keyframes fadeSlide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeSlide .35s ease forwards}
+.d1{animation-delay:.04s;opacity:0}.d2{animation-delay:.08s;opacity:0}
+.d3{animation-delay:.12s;opacity:0}.d4{animation-delay:.16s;opacity:0}
+.d5{animation-delay:.20s;opacity:0}.d6{animation-delay:.24s;opacity:0}
+
+/* CHART RING */
+.ring-wrap{position:relative;width:56px;height:56px;flex-shrink:0}
+.ring-svg{transform:rotate(-90deg)}
+.ring-track{fill:none;stroke:var(--border2);stroke-width:4}
+.ring-fill{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1.2s ease}
+.ring-label{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'DM Mono',monospace;font-size:11px;color:var(--text);font-weight:500;
+  text-align:center;line-height:1;
+}
+
+/* EMPTY/END PAD */
+.end-pad{height:40px}
+</style>
+</head>
+<body>
+
+<!-- ROLE SWITCHER -->
+<div class="role-bar">
+  <span class="role-label">Visualizza come:</span>
+  <button class="role-btn active" onclick="setRole('student',this)">👤 Studente</button>
+  <button class="role-btn" onclick="setRole('creator',this)">⚙️ Creator / Tracker</button>
+</div>
+
+<!-- APP SHELL -->
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">Ingegneria<br>della Narrativa</div>
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-av">M</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name" id="sb-name">Marco T.</div>
+          <div class="sb-user-plan" id="sb-plan">Piano Accelerato</div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-progress">
+      <div class="sbp-row">
+        <span class="sbp-label">Progresso corso</span>
+        <span class="sbp-val" id="sb-pct">40%</span>
+      </div>
+      <div class="sbp-track"><div class="sbp-fill" id="sb-fill" style="width:40%"></div></div>
+    </div>
+    <div class="sb-nav" id="sb-nav"><!-- rendered by JS --></div>
+    <div class="sb-footer">
+      <div class="sb-streak">
+        <span class="streak-icon">🔥</span>
+        <span class="streak-text">Serie: <span class="streak-n" id="streak-n">5</span> giorni</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-breadcrumb">
+        <span id="tb-root">Dashboard</span>
+        <span class="tb-sep">›</span>
+        <span class="tb-current" id="tb-current">Panoramica</span>
+      </div>
+      <div class="tb-right">
+        <div class="tb-notif"><span>🔔</span><div class="notif-dot"></div></div>
+        <button class="tb-btn" id="tb-action" onclick="handleTopAction()">Continua lezione →</button>
+      </div>
+    </div>
+    <div class="content" id="content"><!-- rendered by JS --></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────────────────
+let role = 'student';
+let activeView = 'overview';
+
+const STUDENT = {
+  name:'Marco T.', plan:'Piano Accelerato', avatar:'M',
+  streak:5, totalProgress:40,
+  modules:[
+    {id:'m1',num:'01',name:'Le Fondamenta',sub:'La Decodifica del Potere',color:'#2dd4bf',
+     progress:100,status:'done',
+     lessons:[
+       {id:'l11',num:'L1.1',title:"L'Illusione del Valore Oggettivo",dur:'55 min',status:'done',exDone:true},
+       {id:'l12',num:'L1.2',title:"La Matrice dell'Audience",dur:'50 min',status:'done',exDone:true},
+       {id:'l13',num:'L1.3',title:"Il Ribaltamento del Sound Ambassador",dur:'55 min',status:'done',exDone:true},
+     ]},
+    {id:'m2',num:'02',name:'Architettura della Storia',sub:'Il Framework Scalabile',color:'#60a5fa',
+     progress:66,status:'current',
+     lessons:[
+       {id:'l21',num:'L2.1',title:"Il Viaggio dell'Eroe nel Business",dur:'55 min',status:'done',exDone:true},
+       {id:'l22',num:'L2.2',title:"La Tecnica del Contrasto",dur:'50 min',status:'current',exDone:false},
+       {id:'l23',num:'L2.3',title:"Il Dettaglio Letale",dur:'50 min',status:'locked',exDone:false},
+     ]},
+    {id:'m3',num:'03',name:'Storytelling Tattico',sub:'La Scrittura Istituzionale',color:'#fbbf24',
+     progress:0,status:'locked',
+     lessons:[
+       {id:'l31',num:'L3.1',title:"L'Email come Arma di Precisione",dur:'55 min',status:'locked',exDone:false},
+       {id:'l32',num:'L3.2',title:"Copywriting per LinkedIn",dur:'55 min',status:'locked',exDone:false},
+       {id:'l33',num:'L3.3',title:"Creare il Dossier",dur:'50 min',status:'locked',exDone:false},
+     ]},
+    {id:'m4',num:'04',name:'Presenza Scenica',sub:'Il Dominio Fisico e Digitale',color:'#fb923c',
+     progress:0,status:'locked',
+     lessons:[
+       {id:'l41',num:'L4.1',title:"La Prossemica Digitale",dur:'45 min',status:'locked',exDone:false},
+       {id:'l42',num:'L4.2',title:"La Modulazione Vocale",dur:'50 min',status:'locked',exDone:false},
+       {id:'l43',num:'L4.3',title:"Gestione dell'Obiezione",dur:'55 min',status:'locked',exDone:false},
+     ]},
+    {id:'m5',num:'05',name:'La Monetizzazione',sub:'Il Salto Quantico',color:'#4ade80',
+     progress:0,status:'locked',
+     lessons:[
+       {id:'l51',num:'L5.1',title:"Pacchettizzare l'Esperienza",dur:'60 min',status:'locked',exDone:false},
+       {id:'l52',num:'L5.2',title:"Costruire l'Impero SaaS",dur:'60 min',status:'locked',exDone:false},
+       {id:'l53',num:'L5.3',title:"Il Posizionamento Premium",dur:'60 min',status:'locked',exDone:false},
+     ]},
+  ]
+};
+
+const TRACKER = {
+  areas:[
+    {id:'contenuto',name:'Contenuto Corso',color:'#2dd4bf',
+     tasks:[
+       {name:'Struttura corso (5 moduli, 15 lezioni)',status:'done'},
+       {name:'Script completo tutti i moduli (M1→M5)',status:'done'},
+       {name:'15 esercizi pratici con template',status:'done'},
+       {name:'5 schede autovalutazione',status:'done'},
+       {name:'Slide deck (8–12 slide per lezione)',status:'todo'},
+       {name:'PDF scaricabili per modulo',status:'todo'},
+       {name:'Trascrizioni lezioni',status:'todo'},
+       {name:'Certificato completamento',status:'todo'},
+     ]},
+    {id:'frontend',name:'Frontend / UI',color:'#fbbf24',
+     tasks:[
+       {name:'Sales page completa',status:'done'},
+       {name:'Corso completo (web app)',status:'done'},
+       {name:'Dashboard unificata',status:'next'},
+       {name:'Pagina checkout / Stripe',status:'todo'},
+       {name:'Login / Registrazione',status:'todo'},
+       {name:'Email onboarding (5 email)',status:'todo'},
+       {name:'Landing page beta (waitlist)',status:'todo'},
+       {name:'Mobile optimization',status:'todo'},
+     ]},
+    {id:'marketing',name:'Marketing & Lancio',color:'#a78bfa',
+     tasks:[
+       {name:'Sales page',status:'done'},
+       {name:'Email onboarding 5 email',status:'todo'},
+       {name:'Piano editoriale LinkedIn 90gg',status:'todo'},
+       {name:'Beta recruitment (5-10 tester)',status:'todo'},
+       {name:'Serie post lancio LinkedIn',status:'todo'},
+       {name:'One-pager B2B enterprise',status:'todo'},
+     ]},
+    {id:'tech',name:'Stack Tecnico',color:'#f87171',
+     tasks:[
+       {name:'Scelta stack LMS (Supabase/custom)',status:'todo'},
+       {name:'Integrazione Stripe (3 tier)',status:'todo'},
+       {name:'Autenticazione utenti',status:'todo'},
+       {name:'Database progresso utente',status:'todo'},
+       {name:'Deploy + dominio',status:'todo'},
+       {name:'Analytics (Plausible)',status:'todo'},
+       {name:'CDN video (Mux/Vimeo)',status:'todo'},
+     ]},
+  ],
+  pipeline:[
+    {stage:'Scoperta',name:'Sales Page',status:'done',file:'SALESPAGE.html'},
+    {stage:'Acquisto',name:'Stripe Checkout',status:'next'},
+    {stage:'Onboarding',name:'Email Day 0-3',status:'next'},
+    {stage:'Home',name:'Dashboard',status:'next'},
+    {stage:'Corso',name:'Contenuto LMS',status:'done',file:'COMPLETO.html'},
+    {stage:'Community',name:'Sessioni Live',status:'blocked'},
+    {stage:'Certifica',name:'Completamento',status:'blocked'},
+  ],
+  priorities:[
+    {n:1,task:'Dashboard unificata',area:'Frontend',prio:'P1',status:'next'},
+    {n:2,task:'Checkout + Stripe',area:'Tech',prio:'P1',status:'todo'},
+    {n:3,task:'Autenticazione utenti',area:'Tech',prio:'P1',status:'todo'},
+    {n:4,task:'Email onboarding',area:'Marketing',prio:'P1',status:'todo'},
+    {n:5,task:'Deploy dominio',area:'Tech',prio:'P1',status:'todo'},
+    {n:6,task:'Beta recruitment',area:'Marketing',prio:'P1',status:'todo'},
+    {n:7,task:'Piano LinkedIn 90gg',area:'Marketing',prio:'P1',status:'todo'},
+    {n:8,task:'Slide deck moduli',area:'Contenuto',prio:'P2',status:'todo'},
+    {n:9,task:'PDF scaricabili',area:'Contenuto',prio:'P2',status:'todo'},
+    {n:10,task:'Analytics Plausible',area:'Tech',prio:'P2',status:'todo'},
+  ]
+};
+
+// ── NAV CONFIG ────────────────────────────────────────────────────────
+const NAV = {
+  student:[
+    {group:'Principale'},
+    {id:'overview',icon:'◉',label:'Panoramica',badge:null},
+    {id:'modules',icon:'◈',label:'Moduli',badge:null},
+    {id:'exercises',icon:'◆',label:'Esercizi',badge:{text:'2 aperti',type:'warn'}},
+    {group:'Piano Accelerato'},
+    {id:'sessions',icon:'◎',label:'Sessioni Live',badge:{text:'prossima',type:'new'}},
+    {id:'community',icon:'◒',label:'Community',badge:{text:'3 nuovi',type:'new'}},
+    {group:'Account'},
+    {id:'progress',icon:'◐',label:'Il mio progresso',badge:null},
+    {id:'profile',icon:'○',label:'Profilo',badge:null},
+  ],
+  creator:[
+    {group:'Project Tracker'},
+    {id:'tracker',icon:'◉',label:'Stato progetto',badge:null},
+    {id:'pipeline',icon:'◈',label:'Flusso utente',badge:null},
+    {id:'priorities',icon:'◆',label:'Priorità lancio',badge:{text:'10 task',type:'warn'}},
+    {group:'Contenuto'},
+    {id:'content-status',icon:'◎',label:'Stato contenuto',badge:{text:'8/12',type:'done'}},
+    {group:'Simulazione'},
+    {id:'overview',icon:'◐',label:'Vista studente',badge:null},
+  ]
+};
+
+// ── RENDER HELPERS ────────────────────────────────────────────────────
+function pill(status){
+  const map={
+    done:'<span class="pill done">Completato</span>',
+    current:'<span class="pill current">In corso</span>',
+    locked:'<span class="pill locked">Bloccato</span>',
+    next:'<span class="pill next">Prossimo</span>',
+    todo:'<span class="pill todo">Da fare</span>',
+    warn:'<span class="pill warn">Attenzione</span>',
+  };
+  return map[status]||map.todo;
+}
+
+function ring(pct, color, size=56){
+  const r=20, c=28, circ=2*Math.PI*r;
+  const offset = circ - (pct/100)*circ;
+  return `<div class="ring-wrap" style="width:${size}px;height:${size}px">
+    <svg class="ring-svg" width="${size}" height="${size}" viewBox="0 0 56 56">
+      <circle class="ring-track" cx="${c}" cy="${c}" r="${r}"/>
+      <circle class="ring-fill" cx="${c}" cy="${c}" r="${r}"
+        stroke="${color}" stroke-dasharray="${circ}"
+        stroke-dashoffset="${offset}"/>
+    </svg>
+    <div class="ring-label">${pct}%</div>
+  </div>`;
+}
+
+function pBadge(p){
+  const c={P1:'var(--red)',P2:'var(--amber)',P3:'var(--text3)'};
+  return `<span style="font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;background:${c[p]||c.P3}22;color:${c[p]||c.text3}">${p}</span>`;
+}
+
+function statusDot(s){
+  const c={done:'var(--green)',next:'var(--blue)',todo:'var(--text3)',blocked:'var(--red)'};
+  const t={done:'✓',next:'→',todo:'',blocked:'✕'};
+  const cl = s==='done'?'done':s==='next'?'next':'';
+  return `<div class="task-check ${cl}">${t[s]||''}</div>`;
+}
+
+// ── SIDEBAR RENDER ────────────────────────────────────────────────────
+function renderSidebar(){
+  const nav = NAV[role];
+  let html='';
+  nav.forEach(item=>{
+    if(item.group){
+      html+=`<div class="nav-group">${item.group}</div>`;
+    } else {
+      const isActive = item.id===activeView;
+      const badge = item.badge
+        ?`<span class="ni-badge ${item.badge.type}">${item.badge.text}</span>`:'';
+      html+=`<div class="nav-item ${isActive?'active':''}" onclick="navigate('${item.id}')">
+        <span class="ni-icon">${item.icon}</span>
+        <span class="ni-label">${item.label}</span>
+        ${badge}
+      </div>`;
+    }
+  });
+  document.getElementById('sb-nav').innerHTML=html;
+
+  // Update user info based on role
+  if(role==='creator'){
+    document.getElementById('sb-name').textContent='Creator View';
+    document.getElementById('sb-plan').textContent='Admin';
+    document.getElementById('sb-av').textContent='C';
+    document.getElementById('sb-pct').textContent='—';
+    document.getElementById('sb-fill').style.width='0%';
+    document.getElementById('streak-n').textContent='—';
+  } else {
+    document.getElementById('sb-name').textContent=STUDENT.name;
+    document.getElementById('sb-plan').textContent='Piano '+STUDENT.plan;
+    document.getElementById('sb-av').textContent=STUDENT.avatar;
+    document.getElementById('sb-pct').textContent=STUDENT.totalProgress+'%';
+    document.getElementById('sb-fill').style.width=STUDENT.totalProgress+'%';
+    document.getElementById('streak-n').textContent=STUDENT.streak;
+  }
+}
+
+// ── VIEWS ─────────────────────────────────────────────────────────────
+
+function viewOverview(){
+  const completedLessons = STUDENT.modules.flatMap(m=>m.lessons).filter(l=>l.status==='done').length;
+  const completedEx = STUDENT.modules.flatMap(m=>m.lessons).filter(l=>l.exDone).length;
+  const currentMod = STUDENT.modules.find(m=>m.status==='current');
+  const currentLesson = currentMod?.lessons.find(l=>l.status==='current');
+  return `
+  <div class="welcome-banner anim">
+    <div class="wb-text">
+      <div class="wb-greeting">BENTORNATO</div>
+      <div class="wb-title">Ciao, <em>${STUDENT.name.split(' ')[0]}</em> — continua da dove hai lasciato</div>
+      <div class="wb-sub">Modulo 2 · ${currentLesson?.title||'Prossima lezione'} · 50 min</div>
+    </div>
+    <div class="wb-action">
+      <button class="tb-btn primary" onclick="navigate('modules')">Riprendi →</button>
+    </div>
+  </div>
+  <div class="kpi-row anim d1">
+    <div class="kpi" style="--kpi-color:var(--gold)">
+      <div class="kpi-label">Progresso</div>
+      <div class="kpi-value">${STUDENT.totalProgress}%</div>
+      <div class="kpi-sub">del corso completato</div>
+      <span class="kpi-trend up">+15% questa sett.</span>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--green)">
+      <div class="kpi-label">Lezioni viste</div>
+      <div class="kpi-value">${completedLessons}</div>
+      <div class="kpi-sub">di 15 totali</div>
+      <span class="kpi-trend up">${completedLessons}/15</span>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--blue)">
+      <div class="kpi-label">Esercizi</div>
+      <div class="kpi-value">${completedEx}</div>
+      <div class="kpi-sub">di 15 consegnati</div>
+      <span class="kpi-trend warn">3 aperti</span>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--amber)">
+      <div class="kpi-label">Serie attiva</div>
+      <div class="kpi-value">${STUDENT.streak}</div>
+      <div class="kpi-sub">giorni consecutivi</div>
+      <span class="kpi-trend up">🔥 continua</span>
+    </div>
+  </div>
+  <div class="sec-hdr anim d2"><div class="sec-line"></div><div class="sec-label">Progresso moduli</div><div class="sec-line"></div></div>
+  <div class="modules-grid anim d2">
+    ${STUDENT.modules.map(m=>{
+      const dots = m.lessons.map(l=>`<div class="mod-lesson-dot ${l.status==='done'?'done':l.status==='current'?'current':''}"></div>`).join('');
+      return `<div class="mod-card ${m.status==='locked'?'locked':''}" style="--mc:${m.color}" onclick="${m.status!=='locked'?`navigate('modules')`:''}">
+        <div class="mod-header">
+          <span class="mod-num">Modulo ${m.num}</span>
+          ${pill(m.status)}
+        </div>
+        <div class="mod-name">${m.name}</div>
+        <div class="mod-sub">${m.sub}</div>
+        <div class="mod-prog-row">
+          <span class="mod-prog-label">Completamento</span>
+          <span class="mod-prog-val">${m.progress}%</span>
+        </div>
+        <div class="mod-track"><div class="mod-fill" style="width:${m.progress}%"></div></div>
+        <div class="mod-lessons-row">${dots}</div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+function viewModules(){
+  let html='';
+  STUDENT.modules.forEach((m,mi)=>{
+    html+=`
+    <div class="sec-hdr ${mi===0?'':''}">
+      <div class="sec-line"></div>
+      <div class="sec-label" style="color:${m.color}">Modulo ${m.num} · ${m.name}</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="lesson-list anim" style="margin-bottom:12px">
+      <div class="ll-header">
+        <div>
+          <div class="ll-title">${m.sub}</div>
+          <div class="ll-sub">${m.progress}% completato · ${m.lessons.length} lezioni</div>
+        </div>
+        ${ring(m.progress,m.color,48)}
+      </div>
+      ${m.lessons.map(l=>{
+        const icons={done:'✓',current:'▶',locked:'🔒'};
+        return `<div class="lesson-row ${l.status==='locked'?'locked':''}">
+          <span class="lr-num">${l.num}</span>
+          <div class="lr-icon ${l.status==='done'?'done':l.status==='current'?'current':''}">${icons[l.status]||'○'}</div>
+          <div class="lr-content">
+            <div class="lr-title">${l.title}</div>
+            <div class="lr-sub">${l.exDone?'✓ Esercizio consegnato':'Esercizio da completare'}</div>
+          </div>
+          <div class="lr-right">
+            <span class="lr-dur">${l.dur}</span>
+            ${pill(l.status)}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+  return html+'<div class="end-pad"></div>';
+}
+
+function viewExercises(){
+  const exData=[
+    {icon:'⚡',mod:'M1',name:'Audit del Valore Percepito',desc:'Riscrivi 3 risultati significativi in chiave narrativa',status:'done'},
+    {icon:'🎯',mod:'M1',name:'Mappa Psicologica Audience',desc:'Compila la matrice per il tuo interlocutore target',status:'done'},
+    {icon:'🔄',mod:'M1',name:'Il Ribaltamento Narrativo',desc:'Riscrivi la tua bio con te come protagonista',status:'done'},
+    {icon:'📐',mod:'M2',name:'Mappa il Tuo Viaggio',desc:'Applica le 4 fasi a un progetto reale',status:'done'},
+    {icon:'🔍',mod:'M2',name:'Audit del Contrasto',desc:'5 situazioni con before/after quantificato',status:'current'},
+    {icon:'🎲',mod:'M2',name:'Archivio Dettagli Letali',desc:'Database di 10 numeri reali dalla tua carriera',status:'locked'},
+    {icon:'✉️',mod:'M3',name:'Email ad Alto Impatto',desc:'Framework P–D–SP su situazione reale',status:'locked'},
+    {icon:'📱',mod:'M3',name:'LinkedIn Post Workshop',desc:'3 versioni comparative dello stesso contenuto',status:'locked'},
+    {icon:'📁',mod:'M3',name:'Il Tuo Primo Dossier',desc:'Struttura completa in 5 sezioni',status:'locked'},
+    {icon:'🎥',mod:'M4',name:'Audit Video Completo',desc:'Analisi prossemica e vocale',status:'locked'},
+    {icon:'🎙️',mod:'M4',name:'La Pausa Strategica',desc:'3 pause strategiche registrate',status:'locked'},
+    {icon:'🥊',mod:'M4',name:'Playbook Obiezioni',desc:'5 obiezioni con risposta narrativa',status:'locked'},
+    {icon:'📦',mod:'M5',name:'Disegna il Tuo Metodo',desc:'Offer stack con metodo nominato',status:'locked'},
+    {icon:'🌐',mod:'M5',name:'Funnel Narrativo',desc:'Customer journey narrativo completo',status:'locked'},
+    {icon:'💰',mod:'M5',name:'Pricing & Proposta',desc:'Audit pricing + proposta narrativa v1.0',status:'locked'},
+  ];
+  const done=exData.filter(e=>e.status==='done').length;
+  const current=exData.filter(e=>e.status==='current').length;
+  return `
+  <div class="kpi-row anim" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi" style="--kpi-color:var(--green)"><div class="kpi-label">Completati</div><div class="kpi-value">${done}</div><div class="kpi-sub">di 15 esercizi</div></div>
+    <div class="kpi" style="--kpi-color:var(--amber)"><div class="kpi-label">Da completare</div><div class="kpi-value">${current}</div><div class="kpi-sub">esercizi aperti</div></div>
+    <div class="kpi" style="--kpi-color:var(--text3)"><div class="kpi-label">Bloccati</div><div class="kpi-value">${exData.filter(e=>e.status==='locked').length}</div><div class="kpi-sub">sblocca proseguendo</div></div>
+  </div>
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Tutti gli esercizi</div><div class="sec-line"></div></div>
+  <div class="ex-grid-view">
+    ${exData.map(e=>`
+    <div class="ex-card-v ${e.status==='locked'?'locked':''}">
+      <div class="ex-v-icon">${e.icon}</div>
+      <div class="ex-v-mod">Modulo ${e.mod}</div>
+      <div class="ex-v-name">${e.name}</div>
+      <div class="ex-v-desc">${e.desc}</div>
+      <div class="ex-v-bottom">${pill(e.status)}</div>
+    </div>`).join('')}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+function viewProgress(){
+  return `
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Riepilogo progresso</div><div class="sec-line"></div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+    ${STUDENT.modules.map(m=>`
+    <div class="mod-card" style="--mc:${m.color}">
+      <div class="mod-header"><span class="mod-num">M${m.num}</span>${pill(m.status)}</div>
+      <div class="mod-name">${m.name}</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+        ${ring(m.progress,m.color,48)}
+        <div>
+          <div style="font-size:11px;color:var(--text3)">Lezioni viste</div>
+          <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text)">${m.lessons.filter(l=>l.status==='done').length}/${m.lessons.length}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Esercizi</div>
+          <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text)">${m.lessons.filter(l=>l.exDone).length}/${m.lessons.length}</div>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+function viewSessions(){
+  const sessions=[
+    {date:'Mercoledì 16 Aprile',time:'18:00 – 19:30',title:'Q&A Live — Modulo 2',desc:'Approfondimento Viaggio dell\'Eroe + revisione esercizi',status:'upcoming'},
+    {date:'Mercoledì 23 Aprile',time:'18:00 – 19:30',title:'Q&A Live — Modulo 3',desc:'Workshop email P-D-SP in diretta',status:'scheduled'},
+    {date:'Mercoledì 2 Aprile',time:'18:00 – 19:30',title:'Q&A Live — Modulo 1',desc:'Revisione casi studio e Matrice Audience',status:'done'},
+  ];
+  return `
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Sessioni live — Piano Accelerato</div><div class="sec-line"></div></div>
+  ${sessions.map(s=>`
+  <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:8px;display:flex;align-items:center;gap:16px">
+    <div style="background:var(--s3);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;text-align:center;min-width:60px;flex-shrink:0">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);">${s.date.split(' ')[1]+' '+s.date.split(' ')[2]}</div>
+      <div style="font-size:18px;font-weight:500;color:var(--text)">${s.date.split(' ')[0].slice(0,3)}</div>
+    </div>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px">${s.title}</div>
+      <div style="font-size:11px;color:var(--text3)">${s.desc}</div>
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:4px">${s.time}</div>
+    </div>
+    ${s.status==='upcoming'?`<button class="tb-btn primary">Unisciti →</button>`:
+      s.status==='scheduled'?`<button class="tb-btn">Aggiungi al calendario</button>`:
+      `<button class="tb-btn" style="opacity:.5">Registrazione</button>`}
+  </div>`).join('')}
+  <div class="end-pad"></div>`;
+}
+
+// ── TRACKER VIEWS ─────────────────────────────────────────────────────
+function viewTracker(){
+  const allTasks = TRACKER.areas.flatMap(a=>a.tasks);
+  const done=allTasks.filter(t=>t.status==='done').length;
+  const next=allTasks.filter(t=>t.status==='next').length;
+  const todo=allTasks.filter(t=>t.status==='todo').length;
+  const pct=Math.round(done/allTasks.length*100);
+  return `
+  <div class="tracker-kpi anim">
+    <div class="t-kpi"><div class="t-kpi-n" style="color:var(--gold)">${pct}%</div><div class="t-kpi-l">Avanzamento</div></div>
+    <div class="t-kpi"><div class="t-kpi-n" style="color:var(--green)">${done}</div><div class="t-kpi-l">Completati</div></div>
+    <div class="t-kpi"><div class="t-kpi-n" style="color:var(--blue)">${next}</div><div class="t-kpi-l">Prossimi</div></div>
+    <div class="t-kpi"><div class="t-kpi-n" style="color:var(--amber)">${todo}</div><div class="t-kpi-l">Da fare</div></div>
+    <div class="t-kpi"><div class="t-kpi-n" style="color:var(--text2)">${allTasks.length}</div><div class="t-kpi-l">Task totali</div></div>
+  </div>
+  <div class="area-row anim d1">
+    ${TRACKER.areas.map(a=>{
+      const done2=a.tasks.filter(t=>t.status==='done').length;
+      const pct2=Math.round(done2/a.tasks.length*100);
+      return `<div class="area-card">
+        <div class="area-hdr">
+          <div class="area-dot" style="background:${a.color}"></div>
+          <div class="area-name">${a.name}</div>
+          <div class="area-pct">${done2}/${a.tasks.length} · ${pct2}%</div>
+        </div>
+        <div class="area-track"><div class="area-fill" style="width:${pct2}%;background:${a.color}"></div></div>
+        <div class="task-list">
+          ${a.tasks.map(t=>`
+          <div class="task-item">
+            ${statusDot(t.status)}
+            <span class="task-text ${t.status==='done'?'done-text':''}">${t.name}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:9px;color:${t.status==='done'?'var(--green)':t.status==='next'?'var(--blue)':'var(--text4)'}">${t.status==='done'?'✓ fatto':t.status==='next'?'→ prossimo':'—'}</span>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+function viewPipeline(){
+  return `
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Flusso utente end-to-end</div><div class="sec-line"></div></div>
+  <div class="pipeline anim">
+    ${TRACKER.pipeline.map((s,i)=>`
+    <div class="pipe-stage ${s.status}">
+      <div class="pipe-label">${s.stage}</div>
+      <div class="pipe-name">${s.name}</div>
+      ${s.file?`<div class="pipe-file">${s.file}</div>`:`<div class="pipe-file" style="color:var(--text4)">${s.status==='next'?'in sviluppo':'da fare'}</div>`}
+    </div>
+    ${i<TRACKER.pipeline.length-1?`<div class="pipe-arrow">›</div>`:''}`).join('')}
+  </div>
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Legenda</div><div class="sec-line"></div></div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+    ${[['done','Completato','var(--green)'],['active','In sviluppo / prossimo','var(--gold)'],['blocked','Da fare','var(--text3)']].map(([cls,lbl,col])=>`
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
+      <div style="width:10px;height:10px;border-radius:2px;background:${col};opacity:.7"></div>${lbl}
+    </div>`).join('')}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+function viewPriorities(){
+  return `
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Backlog prioritizzato — lancio</div><div class="sec-line"></div></div>
+  <div class="ptable-wrap anim">
+    <table class="ptable">
+      <thead><tr><th>#</th><th>Task</th><th>Area</th><th>Priorità</th><th>Stato</th></tr></thead>
+      <tbody>
+        ${TRACKER.priorities.map(p=>`
+        <tr>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${p.n}</td>
+          <td style="font-size:13px;color:var(--text)">${p.task}</td>
+          <td style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">${p.area}</td>
+          <td>${pBadge(p.prio)}</td>
+          <td>${pill(p.status)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+function viewContentStatus(){
+  const area = TRACKER.areas[0];
+  return `
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Stato contenuto corso</div><div class="sec-line"></div></div>
+  <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi" style="--kpi-color:var(--green)">
+      <div class="kpi-label">Completati</div>
+      <div class="kpi-value">${area.tasks.filter(t=>t.status==='done').length}</div>
+      <div class="kpi-sub">asset pronti</div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--amber)">
+      <div class="kpi-label">Mancanti</div>
+      <div class="kpi-value">${area.tasks.filter(t=>t.status!=='done').length}</div>
+      <div class="kpi-sub">da produrre</div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--gold)">
+      <div class="kpi-label">Completamento</div>
+      <div class="kpi-value">${Math.round(area.tasks.filter(t=>t.status==='done').length/area.tasks.length*100)}%</div>
+      <div class="kpi-sub">dell'area contenuto</div>
+    </div>
+  </div>
+  <div class="ptable-wrap anim" style="margin-top:16px">
+    <table class="ptable">
+      <thead><tr><th>Asset</th><th>Stato</th><th>Note</th></tr></thead>
+      <tbody>
+        ${[
+          {name:'Struttura corso (5 moduli)',status:'done',note:'Definita e approvata'},
+          {name:'Script M1 — Le Fondamenta',status:'done',note:'3 lezioni complete + esercizi'},
+          {name:'Script M2 — Architettura',status:'done',note:'3 lezioni complete + esercizi'},
+          {name:'Script M3 — Storytelling Tattico',status:'done',note:'3 lezioni complete + esercizi'},
+          {name:'Script M4 — Presenza Scenica',status:'done',note:'3 lezioni complete + esercizi'},
+          {name:'Script M5 — Monetizzazione',status:'done',note:'3 lezioni complete + esercizi'},
+          {name:'15 esercizi con template',status:'done',note:'Compilabili nel browser'},
+          {name:'5 schede autovalutazione',status:'done',note:'Rubric Base→Master'},
+          {name:'Slide deck (8-12 slide / lezione)',status:'todo',note:'Da produrre post-beta'},
+          {name:'PDF scaricabili per modulo',status:'todo',note:'Riepilogo offline'},
+          {name:'Trascrizioni lezioni',status:'todo',note:'Accessibilità'},
+          {name:'Certificato completamento',status:'todo',note:'PDF auto-generato'},
+        ].map(i=>`<tr>
+          <td style="font-size:13px;color:var(--text)">${i.name}</td>
+          <td>${pill(i.status)}</td>
+          <td style="font-size:11px;color:var(--text3)">${i.note}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+function viewPlaceholder(label){
+  return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;gap:12px">
+    <div style="font-size:32px">🚧</div>
+    <div style="font-size:14px;color:var(--text2)">${label}</div>
+    <div style="font-size:12px;color:var(--text3)">In sviluppo — prossimo sprint</div>
+  </div>`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────
+function navigate(view){
+  activeView = view;
+  renderSidebar();
+  const labels = {
+    overview:'Panoramica',modules:'Moduli',exercises:'Esercizi',
+    sessions:'Sessioni Live',community:'Community',progress:'Progresso',profile:'Profilo',
+    tracker:'Stato Progetto',pipeline:'Flusso Utente',priorities:'Priorità',
+    'content-status':'Stato Contenuto'
+  };
+  document.getElementById('tb-current').textContent = labels[view]||view;
+  document.querySelector('.content').scrollTo(0,0);
+
+  const views = {
+    overview: viewOverview,
+    modules: viewModules,
+    exercises: viewExercises,
+    progress: viewProgress,
+    sessions: viewSessions,
+    tracker: viewTracker,
+    pipeline: viewPipeline,
+    priorities: viewPriorities,
+    'content-status': viewContentStatus,
+    community: ()=>viewPlaceholder('Community — Piano Accelerato'),
+    profile: ()=>viewPlaceholder('Profilo & Impostazioni'),
+  };
+
+  const renderer = views[view];
+  document.getElementById('content').innerHTML = renderer ? renderer() : viewPlaceholder(labels[view]);
+
+  // Update topbar action
+  const actions = {
+    overview:'Continua lezione →',
+    modules:'Apri corso completo',
+    exercises:'Consegna esercizio',
+    tracker:'Aggiorna stato',
+    priorities:'Inizia P1 →',
+  };
+  document.getElementById('tb-action').textContent = actions[view]||'Vai →';
+  if(view==='modules'){
+    document.getElementById('tb-action').onclick = ()=>window.open('ingegneria-narrativa-COMPLETO.html','_blank');
+  } else {
+    document.getElementById('tb-action').onclick = handleTopAction;
+  }
+}
+
+function handleTopAction(){
+  if(activeView==='tracker'||activeView==='priorities'||activeView==='pipeline'){
+    navigate('priorities');
+  } else {
+    navigate('modules');
+  }
+}
+
+function setRole(r, btn){
+  role = r;
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const defaultView = r==='student'?'overview':'tracker';
+  navigate(defaultView);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────
+renderSidebar();
+navigate('overview');
+</script>
+</body>
+</html>

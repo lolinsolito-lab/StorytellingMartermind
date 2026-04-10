@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ingegneria della Narrativa — Corso Completo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#111118;--surface2:#18181f;--surface3:#1e1e28;
+  --border:#ffffff0f;--border2:#ffffff18;--border3:#ffffff28;
+  --gold:#c9a84c;--gold2:#e8c96d;--gold-dim:#c9a84c22;--gold-bg:#c9a84c11;
+  --text:#f0ede6;--text2:#a09d96;--text3:#5a5752;--text4:#3a3835;
+  --teal:#2dd4bf;--teal-dim:#2dd4bf18;
+  --blue:#60a5fa;--blue-dim:#60a5fa18;
+  --amber:#fbbf24;--amber-dim:#fbbf2418;
+  --coral:#fb923c;--coral-dim:#fb923c18;
+  --green:#4ade80;--green-dim:#4ade8018;
+  --purple:#a78bfa;--purple-dim:#a78bfa18;
+  --red:#f87171;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border3);border-radius:3px}
+
+/* WINDOW */
+.window{width:100%;height:100vh;display:flex;flex-direction:column}
+.titlebar{
+  height:44px;min-height:44px;background:#09090e;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:12px;position:relative;
+  user-select:none;
+}
+.dots{display:flex;gap:8px}
+.dot{width:12px;height:12px;border-radius:50%;cursor:default}
+.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.win-title{position:absolute;left:50%;transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:.08em}
+.win-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.win-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);background:var(--gold-bg);border:1px solid var(--gold-dim);padding:3px 8px;border-radius:3px}
+
+.layout{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{
+  width:268px;min-width:268px;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+}
+.sidebar-brand{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+.brand-eyebrow{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
+.brand-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;line-height:1.2;color:var(--text)}
+.brand-sub{font-size:11px;color:var(--text3);margin-top:4px}
+
+.sidebar-scroll{flex:1;overflow-y:auto;padding:8px 0}
+.nav-group-label{padding:12px 20px 4px;font-size:9px;color:var(--text4);letter-spacing:.14em;text-transform:uppercase;font-family:'DM Mono',monospace}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:8px 20px;
+  cursor:pointer;transition:all .15s;border-left:2px solid transparent;
+  position:relative;
+}
+.nav-item:hover{background:var(--surface2)}
+.nav-item.active{background:var(--surface2);border-left-color:var(--gold)}
+.nav-item.active .nav-label{color:var(--text)}
+.nav-bullet{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.nav-label{font-size:12px;color:var(--text2);flex:1;line-height:1.3}
+.nav-pill{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);background:var(--border);padding:2px 6px;border-radius:3px}
+
+.nav-sub{padding:0}
+.nav-sub-item{
+  display:flex;align-items:center;gap:8px;padding:6px 20px 6px 36px;
+  cursor:pointer;transition:all .15s;
+}
+.nav-sub-item:hover{background:var(--surface2)}
+.nav-sub-item.active .nav-sub-label{color:var(--text)}
+.nav-sub-dot{width:4px;height:4px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.nav-sub-label{font-size:11px;color:var(--text3)}
+.nav-sub-type{font-family:'DM Mono',monospace;font-size:9px;color:var(--text4);margin-left:auto}
+
+.sidebar-footer{padding:12px 20px;border-top:1px solid var(--border)}
+.prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:6px}
+.prog-bar{height:2px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .4s ease;border-radius:2px}
+.stats-mini{display:flex;gap:6px}
+.stat-mini{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px;text-align:center}
+.stat-mini-n{font-family:'DM Mono',monospace;font-size:13px;color:var(--gold)}
+.stat-mini-l{font-size:9px;color:var(--text3);margin-top:2px}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{
+  height:48px;min-height:48px;
+  background:rgba(10,10,15,.85);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 28px;gap:16px;
+  position:sticky;top:0;z-index:20;
+}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+.breadcrumb .sep{color:var(--text4)}
+.breadcrumb .current{color:var(--text2)}
+.topbar-right{margin-left:auto;display:flex;gap:8px}
+.tbtn{padding:5px 14px;border-radius:100px;font-size:11px;font-weight:500;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.tbtn:hover{background:var(--surface2);color:var(--text);border-color:var(--border3)}
+.tbtn.primary{background:var(--gold);color:#0a0a0f;border-color:var(--gold);font-weight:600}
+.tbtn.primary:hover{background:var(--gold2)}
+
+.content-scroll{flex:1;overflow-y:auto;padding:0}
+
+/* HERO */
+.hero{padding:36px 32px 24px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-100px;right:-60px;width:360px;height:360px;border-radius:50%;pointer-events:none;opacity:.6;background:radial-gradient(circle,var(--hero-glow,var(--gold-dim)) 0%,transparent 70%)}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:100px;border:1px solid;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.1em;margin-bottom:18px}
+.hero-h1{font-family:'Playfair Display',serif;font-size:36px;font-weight:900;line-height:1.1;margin-bottom:12px}
+.hero-h1 em{font-style:italic;color:var(--hero-accent,var(--gold))}
+.hero-sub{font-size:14px;color:var(--text2);line-height:1.65;max-width:640px;margin-bottom:22px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:18px}
+.hero-meta-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
+.hero-meta-dot{width:5px;height:5px;border-radius:50%}
+
+/* SECTION */
+.section{padding:0 32px 24px}
+.section-hdr{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:16px 0 0}
+.section-hdr-line{flex:1;height:1px;background:var(--border)}
+.section-hdr-label{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.section-hdr-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--text4)}
+
+/* LESSON CARD */
+.lesson-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  margin-bottom:10px;transition:all .2s;cursor:pointer;
+  overflow:hidden;position:relative;
+}
+.lesson-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background .2s;border-radius:2px 0 0 2px}
+.lesson-card:hover{border-color:var(--border3);transform:translateX(2px)}
+.lesson-card:hover::before,.lesson-card.open::before{background:var(--lesson-accent,var(--gold))}
+.lesson-card.open{border-color:var(--border2)}
+.lesson-header{display:flex;align-items:start;gap:14px;padding:18px 20px;cursor:pointer}
+.lesson-num-badge{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);padding-top:1px;min-width:32px}
+.lesson-head-content{flex:1}
+.lesson-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.3}
+.lesson-desc{font-size:12px;color:var(--text2);line-height:1.5}
+.lesson-head-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.lesson-dur{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)}
+.lesson-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.ltag{padding:2px 8px;border-radius:3px;font-size:10px;font-family:'DM Mono',monospace;background:var(--border);color:var(--text3)}
+.lesson-chevron{font-size:10px;color:var(--text3);transition:transform .2s;margin-top:2px}
+.lesson-card.open .lesson-chevron{transform:rotate(180deg)}
+
+/* LESSON BODY - SCRIPT */
+.lesson-body{display:none;border-top:1px solid var(--border);padding:0}
+.lesson-card.open .lesson-body{display:block}
+.script-container{padding:20px 24px 24px}
+.script-section{margin-bottom:20px}
+.script-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.script-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.script-text{font-size:13px;color:var(--text2);line-height:1.75;white-space:pre-wrap}
+.script-text strong{color:var(--text);font-weight:500}
+.script-text em{color:var(--hero-accent,var(--gold));font-style:italic}
+.script-callout{
+  background:var(--surface2);border:1px solid var(--border2);border-radius:8px;
+  padding:14px 16px;margin:12px 0;font-size:12px;color:var(--text2);line-height:1.6;
+  border-left:3px solid var(--hero-accent,var(--gold));
+}
+.script-callout strong{color:var(--text);display:block;margin-bottom:4px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.06em}
+.script-list{list-style:none;padding:0;margin:8px 0}
+.script-list li{font-size:13px;color:var(--text2);line-height:1.6;padding:4px 0 4px 16px;position:relative}
+.script-list li::before{content:'→';position:absolute;left:0;color:var(--hero-accent,var(--gold));font-size:11px;top:5px}
+.script-number-list{list-style:none;padding:0;margin:8px 0;counter-reset:slist}
+.script-number-list li{counter-increment:slist;font-size:13px;color:var(--text2);line-height:1.6;padding:6px 0 6px 28px;position:relative;border-bottom:1px solid var(--border)}
+.script-number-list li:last-child{border-bottom:none}
+.script-number-list li::before{content:counter(slist);position:absolute;left:0;font-family:'DM Mono',monospace;font-size:10px;color:var(--hero-accent,var(--gold));background:var(--surface3);border-radius:3px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;top:7px;text-align:center;padding-left:0}
+.key-concept{
+  background:var(--surface3);border-radius:8px;padding:14px 16px;margin:12px 0;
+  border:1px solid var(--border2);
+}
+.key-concept-title{font-size:11px;font-family:'DM Mono',monospace;color:var(--hero-accent,var(--gold));letter-spacing:.06em;margin-bottom:6px}
+.key-concept-body{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* EXERCISE CARDS */
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.ex-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:20px;display:flex;flex-direction:column;gap:0;transition:all .2s;
+}
+.ex-card:hover{background:var(--surface2);border-color:var(--border2)}
+.ex-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ex-icon{width:34px;height:34px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ex-name{font-size:13px;font-weight:500;color:var(--text)}
+.ex-type{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-top:2px}
+.ex-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.ex-template{background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border);margin-bottom:12px}
+.ex-template-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:.1em;margin-bottom:8px}
+.template-field{margin-bottom:8px}
+.template-field-label{font-size:11px;color:var(--text3);margin-bottom:3px}
+.template-field-input{
+  width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:5px;
+  padding:7px 10px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;
+  resize:vertical;min-height:34px;outline:none;transition:border-color .15s;
+}
+.template-field-input:focus{border-color:var(--border3)}
+.template-field-input::placeholder{color:var(--text4)}
+.ex-output-row{margin-top:auto;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:start;gap:8px}
+.ex-output-icon{font-size:11px;color:var(--hero-accent,var(--gold));margin-top:1px;flex-shrink:0}
+.ex-output-text{font-size:11px;color:var(--text3);line-height:1.4}
+.ex-output-text strong{color:var(--text2);font-weight:500}
+
+/* EVALUATION */
+.eval-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px}
+.eval-header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.eval-icon{font-size:16px}
+.eval-title{font-size:14px;font-weight:500;color:var(--text)}
+.eval-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.eval-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:800px){.eval-grid{grid-template-columns:1fr}}
+.eval-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.eval-criterion{font-size:12px;color:var(--text);line-height:1.4;font-weight:500}
+.eval-note{font-size:11px;color:var(--text3);line-height:1.4}
+.eval-stars{display:flex;gap:4px}
+.star{width:22px;height:22px;border-radius:4px;border:1px solid var(--border2);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text4);background:var(--surface3)}
+.star:hover,.star.lit{background:var(--gold-bg);border-color:var(--gold);color:var(--gold)}
+.eval-levels{display:flex;gap:6px;margin-top:4px}
+.eval-level{flex:1;text-align:center;padding:4px;border-radius:4px;font-size:9px;font-family:'DM Mono',monospace;border:1px solid var(--border)}
+.eval-level.l1{color:#f87171;border-color:#f8717133}
+.eval-level.l2{color:var(--amber);border-color:var(--amber-dim)}
+.eval-level.l3{color:var(--blue);border-color:var(--blue-dim)}
+.eval-level.l4{color:var(--teal);border-color:var(--teal-dim)}
+.eval-level.l5{color:var(--green);border-color:var(--green-dim)}
+
+/* OVERVIEW */
+.ov-hero{padding:36px 32px 28px}
+.ov-h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:900;line-height:1.1;margin-bottom:12px}
+.ov-h1 em{font-style:italic;color:var(--gold)}
+.ov-sub{font-size:14px;color:var(--text2);line-height:1.65;max-width:600px;margin-bottom:24px}
+.ov-meta{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:32px}
+.ov-meta-chip{padding:6px 14px;border-radius:100px;background:var(--surface);border:1px solid var(--border2);font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.ov-meta-chip span{color:var(--gold);font-weight:500}
+.ov-modules-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0 32px 32px}
+@media(max-width:1100px){.ov-modules-grid{grid-template-columns:1fr 1fr}}
+.ov-mod-card{
+  border:1px solid var(--border);border-radius:12px;padding:18px;
+  cursor:pointer;transition:all .22s;display:flex;flex-direction:column;gap:8px;
+  position:relative;overflow:hidden;background:var(--surface);
+}
+.ov-mod-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--mc,var(--gold));transform:scaleX(0);transform-origin:left;transition:transform .22s;border-radius:0 0 12px 12px}
+.ov-mod-card:hover{background:var(--surface2);transform:translateY(-2px);border-color:var(--border2)}
+.ov-mod-card:hover::after{transform:scaleX(1)}
+.ov-mod-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.1em}
+.ov-mod-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--text);line-height:1.3}
+.ov-mod-sub{font-size:11px;color:var(--text2);line-height:1.4}
+.ov-mod-lessons{display:flex;flex-direction:column;gap:3px;margin:4px 0}
+.ov-mod-l{font-size:10px;color:var(--text3);padding:3px 0;border-top:1px solid var(--border);line-height:1.3}
+.ov-mod-badge{margin-top:auto;align-self:flex-start;padding:3px 8px;border-radius:4px;font-size:9px;font-family:'DM Mono',monospace;border:1px solid;color:var(--mc,var(--gold));border-color:var(--mc-dim,var(--gold-dim))}
+.ov-usp{padding:0 32px 32px}
+.usp-card{background:var(--surface);border:1px solid var(--gold-dim);border-radius:14px;padding:28px;position:relative;overflow:hidden}
+.usp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold2),transparent)}
+.usp-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+.usp-text{font-family:'Playfair Display',serif;font-size:18px;font-weight:400;font-style:italic;color:var(--text);line-height:1.55;margin-bottom:16px}
+.usp-bullets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:700px){.usp-bullets{grid-template-columns:1fr}}
+.usp-bullet{display:flex;align-items:start;gap:8px;font-size:12px;color:var(--text2);line-height:1.5}
+.usp-bullet-icon{color:var(--gold);margin-top:1px;flex-shrink:0}
+
+/* ANIMATIONS */
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeSlide .3s ease forwards}
+.d1{animation-delay:.04s;opacity:0}.d2{animation-delay:.08s;opacity:0}.d3{animation-delay:.12s;opacity:0}
+.d4{animation-delay:.16s;opacity:0}.d5{animation-delay:.20s;opacity:0}
+
+/* SPACER */
+.end-pad{height:60px}
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+    <div class="win-title">ingegneria-della-narrativa — contenuto completo v1.0</div>
+    <div class="win-right"><span class="win-tag">PRONTO PER IL MERCATO</span></div>
+  </div>
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-eyebrow">Master · High-Ticket</div>
+        <div class="brand-title">Ingegneria della Narrativa</div>
+        <div class="brand-sub">Da Esecutore a Creatore</div>
+      </div>
+      <div class="sidebar-scroll">
+        <div class="nav-group-label">Panoramica</div>
+        <div class="nav-item active" onclick="showPage('overview',this)">
+          <div class="nav-bullet" style="background:var(--gold)"></div>
+          <span class="nav-label">Corso &amp; USP</span>
+        </div>
+
+        <div class="nav-group-label" style="margin-top:8px">Modulo 01 — Le Fondamenta</div>
+        <div class="nav-item" onclick="showPage('m1',this)" id="nav-m1">
+          <div class="nav-bullet" style="background:var(--teal)"></div>
+          <span class="nav-label">Panoramica modulo</span>
+          <span class="nav-pill">3L</span>
+        </div>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="showPage('m1',document.getElementById('nav-m1'));setTimeout(()=>scrollTo('lesson-1-1'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L1.1 Illusione del valore</span><span class="nav-sub-type">script</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m1',document.getElementById('nav-m1'));setTimeout(()=>scrollTo('lesson-1-2'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L1.2 Matrice audience</span><span class="nav-sub-type">script</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m1',document.getElementById('nav-m1'));setTimeout(()=>scrollTo('lesson-1-3'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L1.3 Ribaltamento</span><span class="nav-sub-type">script</span>
+          </div>
+        </div>
+
+        <div class="nav-group-label" style="margin-top:4px">Modulo 02 — Architettura</div>
+        <div class="nav-item" onclick="showPage('m2',this)" id="nav-m2">
+          <div class="nav-bullet" style="background:var(--blue)"></div>
+          <span class="nav-label">Panoramica modulo</span>
+          <span class="nav-pill">3L</span>
+        </div>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="showPage('m2',document.getElementById('nav-m2'));setTimeout(()=>scrollTo('lesson-2-1'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L2.1 Viaggio dell'eroe</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m2',document.getElementById('nav-m2'));setTimeout(()=>scrollTo('lesson-2-2'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L2.2 Tecnica del contrasto</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m2',document.getElementById('nav-m2'));setTimeout(()=>scrollTo('lesson-2-3'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L2.3 Dettaglio letale</span>
+          </div>
+        </div>
+
+        <div class="nav-group-label" style="margin-top:4px">Modulo 03 — Storytelling Tattico</div>
+        <div class="nav-item" onclick="showPage('m3',this)" id="nav-m3">
+          <div class="nav-bullet" style="background:var(--amber)"></div>
+          <span class="nav-label">Panoramica modulo</span>
+          <span class="nav-pill">3L</span>
+        </div>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="showPage('m3',document.getElementById('nav-m3'));setTimeout(()=>scrollTo('lesson-3-1'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L3.1 Email come arma</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m3',document.getElementById('nav-m3'));setTimeout(()=>scrollTo('lesson-3-2'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L3.2 Copywriting LinkedIn</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m3',document.getElementById('nav-m3'));setTimeout(()=>scrollTo('lesson-3-3'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L3.3 Creare il Dossier</span>
+          </div>
+        </div>
+
+        <div class="nav-group-label" style="margin-top:4px">Modulo 04 — Presenza Scenica</div>
+        <div class="nav-item" onclick="showPage('m4',this)" id="nav-m4">
+          <div class="nav-bullet" style="background:var(--coral)"></div>
+          <span class="nav-label">Panoramica modulo</span>
+          <span class="nav-pill">3L</span>
+        </div>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="showPage('m4',document.getElementById('nav-m4'));setTimeout(()=>scrollTo('lesson-4-1'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L4.1 Prossemica digitale</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m4',document.getElementById('nav-m4'));setTimeout(()=>scrollTo('lesson-4-2'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L4.2 Modulazione vocale</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m4',document.getElementById('nav-m4'));setTimeout(()=>scrollTo('lesson-4-3'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L4.3 Gestione obiezione</span>
+          </div>
+        </div>
+
+        <div class="nav-group-label" style="margin-top:4px">Modulo 05 — Monetizzazione</div>
+        <div class="nav-item" onclick="showPage('m5',this)" id="nav-m5">
+          <div class="nav-bullet" style="background:var(--green)"></div>
+          <span class="nav-label">Panoramica modulo</span>
+          <span class="nav-pill">3L</span>
+        </div>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="showPage('m5',document.getElementById('nav-m5'));setTimeout(()=>scrollTo('lesson-5-1'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L5.1 Pacchettizzare</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m5',document.getElementById('nav-m5'));setTimeout(()=>scrollTo('lesson-5-2'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L5.2 Impero SaaS</span>
+          </div>
+          <div class="nav-sub-item" onclick="showPage('m5',document.getElementById('nav-m5'));setTimeout(()=>scrollTo('lesson-5-3'),200)">
+            <div class="nav-sub-dot"></div><span class="nav-sub-label">L5.3 Posizionamento premium</span>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div class="prog-row"><span>Completamento</span><span id="pct-label">0%</span></div>
+        <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        <div class="stats-mini">
+          <div class="stat-mini"><div class="stat-mini-n">5</div><div class="stat-mini-l">moduli</div></div>
+          <div class="stat-mini"><div class="stat-mini-n">15</div><div class="stat-mini-l">lezioni</div></div>
+          <div class="stat-mini"><div class="stat-mini-n">15</div><div class="stat-mini-l">esercizi</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+      <div class="topbar">
+        <div class="breadcrumb" id="breadcrumb">
+          <span>Ingegneria della Narrativa</span>
+          <span class="sep">›</span>
+          <span class="current" id="bc-current">Panoramica</span>
+        </div>
+        <div class="topbar-right">
+          <button class="tbtn" onclick="window.print()">Stampa PDF</button>
+          <button class="tbtn primary" id="next-btn" onclick="nextPage()">Prossimo →</button>
+        </div>
+      </div>
+      <div class="content-scroll" id="content-scroll">
+        <div id="page-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── PAGE DEFINITIONS ───────────────────────────────────────────────
+const PAGES = ['overview','m1','m2','m3','m4','m5'];
+let currentPage = 'overview';
+let ratingData = {};
+
+function scrollTo(id){
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function nextPage(){
+  const idx = PAGES.indexOf(currentPage);
+  if(idx < PAGES.length-1){
+    const next = PAGES[idx+1];
+    const navEl = document.getElementById('nav-'+next) || document.querySelector('.nav-item');
+    showPage(next, navEl);
+  }
+}
+
+function showPage(page, navEl){
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  document.getElementById('bc-current').textContent = {
+    overview:'Panoramica Corso',
+    m1:'Modulo 01 — Le Fondamenta',
+    m2:'Modulo 02 — Architettura della Storia',
+    m3:'Modulo 03 — Storytelling Tattico',
+    m4:'Modulo 04 — Presenza Scenica',
+    m5:'Modulo 05 — La Monetizzazione'
+  }[page];
+  document.getElementById('content-scroll').scrollTo(0,0);
+  const renderers = {overview:renderOverview,m1:renderM1,m2:renderM2,m3:renderM3,m4:renderM4,m5:renderM5};
+  document.getElementById('page-content').innerHTML = renderers[page]();
+  document.getElementById('next-btn').style.display = page==='m5'?'none':'block';
+  restoreRatings(page);
+}
+
+function toggleLesson(id){
+  const card = document.getElementById(id);
+  card.classList.toggle('open');
+}
+
+function rate(page,idx,val){
+  const key=`${page}-${idx}`;
+  ratingData[key]=val;
+  const stars = document.querySelectorAll(`#stars-${page}-${idx} .star`);
+  stars.forEach((s,i)=>s.classList.toggle('lit',i<val));
+  updateProgress();
+}
+
+function restoreRatings(page){
+  Object.keys(ratingData).filter(k=>k.startsWith(page+'-')).forEach(k=>{
+    const idx=parseInt(k.split('-')[2]);
+    const val=ratingData[k];
+    const stars=document.querySelectorAll(`#stars-${page}-${idx} .star`);
+    stars.forEach((s,i)=>s.classList.toggle('lit',i<val));
+  });
+}
+
+function updateProgress(){
+  const total = Object.keys(ratingData).length * 5;
+  const scored = Object.values(ratingData).reduce((a,b)=>a+b,0);
+  const pct = total ? Math.round(scored/total*100) : 0;
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('pct-label').textContent = pct+'%';
+}
+
+// ─── HELPERS ────────────────────────────────────────────────────────
+function lessonCard(id,num,title,desc,tags,duration,scriptHTML){
+  return `<div class="lesson-card" id="${id}">
+    <div class="lesson-header" onclick="toggleLesson('${id}')">
+      <div class="lesson-num-badge">${num}</div>
+      <div class="lesson-head-content">
+        <div class="lesson-title">${title}</div>
+        <div class="lesson-desc">${desc}</div>
+        <div class="lesson-tags">${tags.map(t=>`<span class="ltag">${t}</span>`).join('')}</div>
+      </div>
+      <div class="lesson-head-right">
+        <div class="lesson-dur">${duration}</div>
+        <div class="lesson-chevron">▼</div>
+      </div>
+    </div>
+    <div class="lesson-body">
+      <div class="script-container">${scriptHTML}</div>
+    </div>
+  </div>`;
+}
+
+function exCard(icon,name,type,desc,fields,output){
+  const fieldHTML = fields.map(f=>`<div class="template-field">
+    <div class="template-field-label">${f.label}</div>
+    <textarea class="template-field-input" placeholder="${f.ph}" rows="${f.rows||2}"></textarea>
+  </div>`).join('');
+  return `<div class="ex-card">
+    <div class="ex-header">
+      <div class="ex-icon">${icon}</div>
+      <div><div class="ex-name">${name}</div><div class="ex-type">${type}</div></div>
+    </div>
+    <div class="ex-desc">${desc}</div>
+    <div class="ex-template">
+      <div class="ex-template-label">Template compilabile</div>
+      ${fieldHTML}
+    </div>
+    <div class="ex-output-row">
+      <div class="ex-output-icon">◆</div>
+      <div class="ex-output-text"><strong>Output atteso:</strong> ${output}</div>
+    </div>
+  </div>`;
+}
+
+function evalSection(page,items){
+  const itemsHTML = items.map((e,i)=>`
+    <div class="eval-item">
+      <div class="eval-criterion">${e.c}</div>
+      <div class="eval-stars" id="stars-${page}-${i}">
+        ${[1,2,3,4,5].map(n=>`<div class="star" onclick="rate('${page}',${i},${n})">◆</div>`).join('')}
+      </div>
+      <div class="eval-levels">
+        <div class="eval-level l1">Base</div>
+        <div class="eval-level l2">Sviluppo</div>
+        <div class="eval-level l3">Competente</div>
+        <div class="eval-level l4">Avanzato</div>
+        <div class="eval-level l5">Master</div>
+      </div>
+      <div class="eval-note">${e.n}</div>
+    </div>`).join('');
+  return `<div class="eval-card anim">
+    <div class="eval-header">
+      <div class="eval-icon">◈</div>
+      <div><div class="eval-title">Scheda di Autovalutazione</div><div class="eval-sub">Valuta onestamente. 1 = da sviluppare · 5 = padronanza</div></div>
+    </div>
+    <div class="eval-grid">${itemsHTML}</div>
+  </div>`;
+}
+
+function sectionHdr(label, num=''){
+  return `<div class="section-hdr"><div class="section-hdr-line"></div><div class="section-hdr-label">${label}</div>${num?`<div class="section-hdr-num">${num}</div>`:''}<div class="section-hdr-line"></div></div>`;
+}
+
+// ─── OVERVIEW ───────────────────────────────────────────────────────
+function renderOverview(){
+  return `<div class="ov-hero anim">
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:12px">Corso Master · High-Ticket · Professionisti IT Senior</div>
+    <div class="ov-h1">Da <em>Esecutore</em><br>a Creatore</div>
+    <div class="ov-sub">Il primo corso che insegna ai professionisti IT senior come usare lo storytelling applicato alle vere dinamiche di potere aziendale — non teoria del marketing, ma tecnica di sopravvivenza e dominio in campo aperto.</div>
+    <div class="ov-meta">
+      <div class="ov-meta-chip">📚 <span>5</span> moduli progressivi</div>
+      <div class="ov-meta-chip">🎬 <span>15</span> lezioni video</div>
+      <div class="ov-meta-chip">⚡ <span>15</span> esercizi pratici</div>
+      <div class="ov-meta-chip">📋 <span>5</span> schede autovalutazione</div>
+      <div class="ov-meta-chip">📁 <span>15+</span> template scaricabili</div>
+      <div class="ov-meta-chip">⏱ <span>13h+</span> di contenuto</div>
+    </div>
+  </div>
+  <div style="padding:0 32px">${sectionHdr('struttura del corso')}</div>
+  <div class="ov-modules-grid anim d1">
+    ${[
+      {key:'m1',num:'01',name:'Le Fondamenta',sub:'La Decodifica del Potere',mc:'var(--teal)',mcd:'var(--teal-dim)',badge:'Fondamenta',ls:['L1.1 Illusione del valore oggettivo','L1.2 Matrice dell\'audience','L1.3 Ribaltamento Sound Ambassador']},
+      {key:'m2',num:'02',name:'Architettura della Storia',sub:'Il Framework Scalabile',mc:'var(--blue)',mcd:'var(--blue-dim)',badge:'Intermedio',ls:['L2.1 Viaggio dell\'eroe nel business','L2.2 Tecnica del contrasto','L2.3 Il dettaglio letale']},
+      {key:'m3',num:'03',name:'Storytelling Tattico',sub:'La Scrittura Istituzionale',mc:'var(--amber)',mcd:'var(--amber-dim)',badge:'Avanzato',ls:['L3.1 Email come arma di precisione','L3.2 Copywriting per LinkedIn','L3.3 Creare il Dossier']},
+      {key:'m4',num:'04',name:'Presenza Scenica',sub:'Il Dominio Fisico e Digitale',mc:'var(--coral)',mcd:'var(--coral-dim)',badge:'Avanzato',ls:['L4.1 Prossemica digitale','L4.2 Modulazione vocale','L4.3 Gestione obiezione']},
+      {key:'m5',num:'05',name:'La Monetizzazione',sub:'Il Salto Quantico',mc:'var(--green)',mcd:'var(--green-dim)',badge:'Master',ls:['L5.1 Pacchettizzare l\'esperienza','L5.2 Costruire l\'impero SaaS','L5.3 Posizionamento premium']}
+    ].map(m=>`<div class="ov-mod-card" style="--mc:${m.mc};--mc-dim:${m.mcd}" onclick="showPage('${m.key}',document.getElementById('nav-${m.key}'))">
+      <div class="ov-mod-num">Modulo ${m.num}</div>
+      <div class="ov-mod-name">${m.name}</div>
+      <div class="ov-mod-sub">${m.sub}</div>
+      <div class="ov-mod-lessons">${m.ls.map(l=>`<div class="ov-mod-l">${l}</div>`).join('')}</div>
+      <div class="ov-mod-badge">${m.badge}</div>
+    </div>`).join('')}
+  </div>
+  <div style="padding:0 32px">${sectionHdr('unique selling proposition')}</div>
+  <div class="ov-usp anim d2">
+    <div class="usp-card">
+      <div class="usp-label">Perché questo corso è diverso</div>
+      <div class="usp-text">"Il mercato è pieno di corsi di storytelling tenuti da teorici del marketing. Il vantaggio competitivo assoluto di questo corso è che insegna lo storytelling applicato alle vere dinamiche di potere. Non un corso su come scrivere post carini su Instagram. Un corso di sopravvivenza e dominio in campo aperto."</div>
+      <div class="usp-bullets">
+        <div class="usp-bullet"><span class="usp-bullet-icon">◆</span>Insegnato da chi ha usato la narrativa per paralizzare il dipartimento legale di un CAC 40</div>
+        <div class="usp-bullet"><span class="usp-bullet-icon">◆</span>Tecniche applicate a contesti IT senior, negoziazione enterprise e consulenza B2B</div>
+        <div class="usp-bullet"><span class="usp-bullet-icon">◆</span>Non formerà "ambasciatori" di qualcun altro. Formerà Sovrani della propria Narrativa</div>
+        <div class="usp-bullet"><span class="usp-bullet-icon">◆</span>Ogni lezione ha un output reale misurabile, non solo teoria da assorbire</div>
+      </div>
+    </div>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ─── MODULE 1 ───────────────────────────────────────────────────────
+function renderM1(){
+  const accent='var(--teal)';
+  return `<div class="hero anim" style="--hero-accent:var(--teal);--hero-glow:var(--teal-dim)">
+    <div class="hero-eyebrow" style="color:var(--teal);border-color:var(--teal-dim)">Modulo 01 · Le Fondamenta · 3 Lezioni · 2h 40min</div>
+    <div class="hero-h1">La <em>Decodifica</em> del Potere</div>
+    <div class="hero-sub">Lo storytelling non è scrivere fiabe. È la manipolazione etica della percezione. Questo modulo smonta le illusioni su cui è costruito il sistema e consegna allo studente le leve reali su cui agisce chi comanda davvero.</div>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--teal)"></div>Prerequisiti: nessuno</div>
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--text3)"></div>Livello: Fondamenta</div>
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--text3)"></div>Output: 3 deliverable pratici</div>
+    </div>
+  </div>
+  <div class="section" style="--lesson-accent:var(--teal)">
+    ${sectionHdr('lezioni — script completi','3')}
+
+    ${lessonCard('lesson-1-1','L1.1','L\'Illusione del Valore Oggettivo','Perché chi lavora di più guadagna di meno, e chi sa raccontare il proprio lavoro prende i budget.',['percezione','valore','potere','economia cognitiva'],'55 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura — Hook (min 0–4)</div>
+        <div class="script-text">Permettimi di farti una domanda scomoda.
+
+Pensa all'ultimo collega che ha ricevuto una promozione, un budget importante, o un contratto che tu avresti potuto gestire meglio. Forse molto meglio.
+
+Perché è successo?
+
+La risposta che ti daranno i tuoi superiori sarà qualcosa come "visibilità", "comunicazione", "leadership". Tutte parole vaghe che nascondono un meccanismo preciso che oggi ti insegno a smontare e a usare a tuo vantaggio.
+
+Il meccanismo si chiama <em>gestione della percezione del valore</em>. E non ha nulla a che fare con quanto sei bravo. Ha tutto a che fare con come sei raccontato — e da chi.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Corpo — Concetto Chiave (min 4–30)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Il Paradosso del Merito</div>
+          <div class="key-concept-body">In un mercato razionale, il valore di un professionista sarebbe proporzionale alla qualità del suo output. Ma i mercati umani non sono razionali. Sono narrativi. Chi decide i budget — il CFO, il board, il cliente enterprise — non può verificare direttamente la qualità tecnica del tuo lavoro. Può solo percepirne la storia.</div>
+        </div>
+        <div class="script-text">Guarda questo scenario. Due architetti di sistema. Stesso stack tecnico, stessa seniority.
+
+<strong>Il Primo</strong> risolve un'interruzione critica in 6 ore. Ripristina il servizio, aggiorna il ticket, chiude l'incidente. Fine.
+
+<strong>Il Secondo</strong> risolve lo stesso problema in 6 ore. Ma prima di chiudere, manda un'email al suo manager con oggetto: <em>"Aggiornamento critico: Incidente H3 — 6 ore, 3 sistemi coinvolti, zero perdita di dati"</em>. Nel corpo: una riga di contesto, due righe di azione, un KPI. Settanta parole.
+
+Chi dei due ottiene il budget per il progetto di ottimizzazione il trimestre successivo?
+
+Non è una domanda retorica. La risposta è sempre il secondo. Non perché abbia lavorato meglio. Perché ha <em>reso visibile</em> il lavoro al sistema che decide.</div>
+        <div class="script-callout">
+          <strong>CONCETTO CHIAVE — La Legge della Visibilità Selettiva</strong>
+          I decisori aziendali operano su informazioni incomplete. Il loro modello mentale di te è costruito al 90% da ciò che hai comunicato, non da ciò che hai fatto. Il tuo valore oggettivo è irrilevante se non attraversa il filtro della percezione. Il tuo compito non è solo fare bene il lavoro. È assicurarti che il lavoro ben fatto sia tradotto in un linguaggio che il sistema può processare.
+        </div>
+        <div class="script-text">Questo non significa autopromozione nel senso volgare del termine. Non si tratta di vantarsi. Si tratta di qualcosa di molto più strategico: <strong>essere l'autore della propria narrativa professionale</strong> invece di lasciare che la scrivano altri — o peggio, che rimanga non scritta.
+
+Perché quando la tua narrativa rimane non scritta, qualcuno la scrive comunque. Il tuo collega che parla di più in riunione. Il manager che assegna crediti in modo approssimativo. Il sistema che premia la visibilità sopra la sostanza.
+
+La domanda non è "devo comunicare il mio valore?". La domanda è "chi sta già scrivendo la tua storia al posto tuo?"</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Le Tre Economie del Valore</div>
+          <div class="key-concept-body"><strong>Economia del Lavoro:</strong> Ciò che produci. Misurabile, verificabile, ma invisibile ai non-tecnici.<br><strong>Economia della Visibilità:</strong> Come il lavoro viene percepito dal sistema decisionale. Dipende interamente dalla tua narrativa.<br><strong>Economia della Fiducia:</strong> La posizione che occupi nella mappa mentale dei decisori. Costruita nel tempo, difficile da distruggere se ben fondata.</div>
+        </div>
+        <div class="script-text">La maggior parte dei professionisti IT opera solo nella prima economia. Si concentrano sull'output tecnico, assumono che parli da solo, si sorprendono quando non viene riconosciuto.
+
+I professionisti che avanzano rapidamente — e che comandano tariffe premium — operano in tutte e tre le economie simultaneamente. Producono lavoro di qualità, lo rendono visibile con precisione narrativa, e costruiscono nel tempo una posizione di autorità che i budget cercano, non aspettano.
+
+Questo corso ti insegna a operare in tutte e tre le economie.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Approfondimento — Il Sistema di Percezione Aziendale (min 30–48)</div>
+        <div class="script-text">Vediamo come funziona concretamente il sistema di percezione in un'azienda enterprise.
+
+Il board vede cifre aggregate e narrative di alto livello. Il CFO vede P&L e risk assessment. Il tuo manager vede output di team e velocity. I tuoi peer vedono gli stessi problemi che vedi tu.
+
+Nessuno di questi livelli vede il tuo lavoro reale. Vedono una <strong>rappresentazione</strong> del tuo lavoro — filtrata, sintetizzata, spesso distorta da chi controlla il canale comunicativo.
+
+La domanda strategica è: chi controlla il canale tra il tuo lavoro e il decisore?
+
+Se sei tu, sei un Ingegnere della Narrativa. Se è il tuo manager, sei dipendente dalla sua generosità. Se non è nessuno, sei invisibile.</div>
+        <div class="script-callout">
+          <strong>CASO PRATICO — Il Fattore Moltiplicatore</strong>
+          Un senior developer in una fintech europea lavora su un progetto di compliance che riduce il rischio di sanzioni da €2.3M. Il lavoro richiede 4 mesi, involve 3 team, tocca sistemi in 2 giurisdizioni. Alla fine presenta: "Completata l'implementazione DORA, test superati." Nessun numero, nessun contesto. Il suo manager scrive nel performance review: "Ha gestito un task di compliance." Risultato: nessun avanzamento. Nessun bonus straordinario. Il valore di €2.3M di rischio mitigato non è mai entrato nel sistema decisionale.
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura — Call to Action (min 48–55)</div>
+        <div class="script-text">Ecco il tuo primo compito come Ingegnere della Narrativa.
+
+Pensa agli ultimi tre mesi del tuo lavoro. Identifica il momento in cui hai prodotto il risultato di maggior valore oggettivo.
+
+Ora rispondi a questa domanda: <em>chi lo sa, oltre a te?</em>
+
+Se la risposta è "il mio manager forse", hai il tuo primo caso studio da trasformare. Nell'esercizio di questa lezione ti guiderò passo per passo attraverso l'Audit del Valore Percepito — il processo per tradurre risultati tecnici in narrativa che il sistema aziendale può leggere, ricordare e premiare.
+
+La prossima lezione ti darà lo strumento per capire a chi stai raccontando questa storia — e come adattarla al sistema operativo mentale di chi ti ascolta.</div>
+      </div>
+    `)}
+
+    ${lessonCard('lesson-1-2','L1.2','La Matrice dell\'Audience','Come mappare psicologicamente chi ti ascolta per adattare ogni narrativa al suo sistema operativo mentale.',['psicologia','audience','mappatura','decisori'],'50 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura — Hook (min 0–4)</div>
+        <div class="script-text">Hai mai fatto una presentazione perfetta — dati solidi, slide pulite, logica inattaccabile — e sentito che non stava atterrando?
+
+Non è un problema di contenuto. È un problema di canale.
+
+Ogni persona che ti ascolta ha un <em>sistema operativo mentale</em> diverso. Il manager che pensa in termini di rischio aziendale. Il cliente enterprise che pensa in termini di ROI trimestrale. L'investitore che pensa in termini di scalabilità e exit. La tua community che pensa in termini di identità e appartenenza.
+
+Parlare a tutti nello stesso modo è come mandare un'email HTML a un client di posta che supporta solo testo plain. Il contenuto c'è. Ma non viene renderizzato. Oggi costruiamo la matrice che ti permette di renderizzare il tuo messaggio su qualsiasi sistema.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Corpo — I 4 Sistemi Operativi (min 4–35)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Sistema 1 — Il Manager Interno</div>
+          <div class="key-concept-body"><strong>Paura primaria:</strong> Perdere controllo o essere sorpreso da un problema che avrebbe dovuto anticipare.<br><strong>Obiettivo nascosto:</strong> Apparire competente ai suoi superiori grazie al tuo lavoro.<br><strong>Linguaggio che attiva fiducia:</strong> Certezze, timeline, ownership chiara, nessuna sorpresa.<br><strong>Trigger di resistenza:</strong> Complessità tecnica non tradotta, problemi senza soluzione proposta, ambiguità su chi decide cosa.</div>
+        </div>
+        <div class="script-text">Con il manager interno, la tua narrativa deve sempre iniziare con la conclusione, non con il processo. Non "abbiamo analizzato X, Y, Z e quindi..." ma "la situazione è sotto controllo, ecco cosa è successo e cosa faremo".
+
+Stai parlando con qualcuno il cui sistema operativo risponde a un'unica domanda: <em>devo preoccuparmi?</em> La tua narrativa deve rispondere immediatamente: no. E poi — solo poi — fornire le prove.</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Sistema 2 — Il Cliente Enterprise</div>
+          <div class="key-concept-body"><strong>Paura primaria:</strong> Prendere la decisione sbagliata davanti al suo board. Il rischio percepito è asimmetrico: se fallisce, lo sa tutti; se ha successo, è aspettativa.<br><strong>Obiettivo nascosto:</strong> Trovare qualcuno che si prenda la responsabilità tecnica in modo che lui possa difendersi internamente.<br><strong>Linguaggio che attiva fiducia:</strong> Casi studio analoghi, referenze verificabili, rischi esplicitati e gestiti, garanzie di processo.<br><strong>Trigger di resistenza:</strong> Soluzioni "su misura" non dimostrate, mancanza di precedenti documentati, prezzi senza benchmark.</div>
+        </div>
+        <div class="script-text">Con il cliente enterprise non stai vendendo una soluzione tecnica. Stai vendendo <strong>la riduzione del rischio della sua decisione</strong>. La tua narrativa deve far sentire che sceglierti è la mossa più difendibile che possa fare davanti al suo CFO.</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Sistema 3 — L'Investitore</div>
+          <div class="key-concept-body"><strong>Paura primaria:</strong> Perdere il momento di mercato investendo nel team sbagliato o nel modello sbagliato.<br><strong>Obiettivo nascosto:</strong> Trovare la narrativa di successo che può raccontare ai suoi LP. Investe in storie, non solo in numeri.<br><strong>Linguaggio che attiva fiducia:</strong> TAM credibile, traction misurabile, team con unfair advantage, visione ambiziosa ma plausibile.<br><strong>Trigger di resistenza:</strong> Founder che non capisce la metrica chiave del suo mercato, humility mal calibrata (troppa o troppo poca).</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Sistema 4 — La Community / Audience</div>
+          <div class="key-concept-body"><strong>Paura primaria:</strong> Seguire qualcuno che non capisce davvero la sua situazione. Il "sì, ma nel mio caso..." è il segnale di resistenza massimo.<br><strong>Obiettivo nascosto:</strong> Trovare un modello identitario, qualcuno che abbia già attraversato il percorso che stanno cercando di fare.<br><strong>Linguaggio che attiva fiducia:</strong> Vulnerabilità calibrata, specificità dell'esperienza vissuta, non generalizzazioni.<br><strong>Trigger di resistenza:</strong> Tono cattedratico, successo presentato senza sacrificio, mancanza di specificità situazionale.</div>
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Applicazione Pratica — La Matrice (min 35–45)</div>
+        <div class="script-callout">
+          <strong>ESERCIZIO IN TEMPO REALE</strong>
+          Pensa a una comunicazione che devi fare nella prossima settimana. Un update a un manager, una proposta a un cliente, un post su LinkedIn. Identifica il sistema operativo del tuo interlocutore primario. Poi chiediti: la mia comunicazione attuale risponde alla sua paura primaria nel primo paragrafo? Se no, stai scrivendo per te, non per lui.
+        </div>
+        <div class="script-text">La Matrice dell'Audience non è uno strumento da usare una volta sola. È un filtro permanente da attivare ogni volta che apri una comunicazione, entri in una riunione, o scrivi un post.
+
+La domanda operativa è sempre la stessa: <em>qual è il sistema operativo di chi mi ascolta in questo momento?</em>
+
+E la regola d'oro è: non puoi controllare come vieni percepito, ma puoi controllare cosa dai in input al sistema percettivo degli altri. La Matrice è il pannello di controllo di quell'input.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura (min 45–50)</div>
+        <div class="script-text">Nella prossima lezione vediamo il caso studio più potente che ho: come si smonta la narrativa di una multinazionale e se ne impone una propria. Come si trasforma l'essere stati un esecutore in essere diventati un autore.
+
+L'esercizio di questa lezione ti chiederà di compilare la Matrice per il tuo interlocutore più importante dei prossimi 30 giorni. Fallo prima di andare avanti. La Matrice non compilata è teoria. Quella compilata è uno strumento di potere.</div>
+      </div>
+    `)}
+
+    ${lessonCard('lesson-1-3','L1.3','Il Ribaltamento del Sound Ambassador','Come smettere di essere il megafono dell\'azienda e trasformare ogni esperienza professionale in capitale narrativo personale.',['personal brand','ribaltamento','sound ambassador','caso studio'],'55 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura — Il Frame (min 0–6)</div>
+        <div class="script-text">Capgemini ha un programma che si chiama "Sound Ambassador". L'obiettivo dichiarato è formare dipendenti che parlino bene dell'azienda sui social, alle conferenze, nelle conversazioni informali.
+
+È un'architettura elegante dal punto di vista dell'azienda: prendi la credibilità personale dei tuoi dipendenti, il loro network LinkedIn, la loro voce autentica — e la convoglio per amplificare il mio brand aziendale. Gratis.
+
+Il problema non è etico. Il problema è strategico: stai <em>prestando</em> la tua narrativa a qualcuno che la usa per costruire la propria, non la tua.
+
+In questa lezione facciamo il ribaltamento. Ti mostro come prendere la stessa struttura — l'esperienza aziendale come materiale narrativo — e usarla per costruire il tuo brand personale invece del loro.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Il Meccanismo del Ribaltamento (min 6–30)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">La Differenza Fondamentale</div>
+          <div class="key-concept-body"><strong>Sound Ambassador:</strong> "Lavoro in Capgemini e qui abbiamo sviluppato un approccio innovativo alla trasformazione digitale che..." → L'azienda è l'eroe. Tu sei il megafono.<br><br><strong>Ingegnere della Narrativa:</strong> "Lavorando su un progetto di trasformazione digitale in un contesto enterprise multinazionale, ho sviluppato un metodo per gestire la resistenza organizzativa che oggi applico con i miei clienti..." → Tu sei l'eroe. L'azienda è il contesto che ti ha formato.</div>
+        </div>
+        <div class="script-text">La differenza non è di contenuto — sono gli stessi fatti. La differenza è di <strong>soggetto narrativo</strong>. Chi è l'agente della storia? Chi impara, cresce, risolve, emerge?
+
+Nelle due versioni l'esperienza è identica. Ma nella prima, se lasci Capgemini, perdi la storia. Nella seconda, porti la storia con te ovunque tu vada.
+
+Questo è il capitale narrativo: il valore che si accumula nella tua persona, non nel tuo datore di lavoro.</div>
+        <div class="script-callout">
+          <strong>IL PRINCIPIO DEL CAPITALE NARRATIVO</strong>
+          Ogni progetto che gestisci, ogni crisi che risolvi, ogni sistema che costruisci è contemporaneamente un asset aziendale e un caso studio personale. L'azienda ottiene il risultato tecnico. Tu ottieni l'esperienza. La domanda è: stai documentando e narrando quella esperienza in modo da capitalizzarla nel lungo termine?
+        </div>
+        <div class="script-text">Vediamo il processo in tre step.
+
+<strong>Step 1 — L'Estrazione.</strong> Identifica nei tuoi ultimi 3 anni i 5 momenti in cui hai prodotto il risultato più significativo. Non i task completati. I momenti in cui qualcosa è cambiato grazie al tuo intervento. Una crisi risolta. Un processo ottimizzato. Una decisione che hai influenzato.
+
+<strong>Step 2 — Il Ribaltamento del Soggetto.</strong> Riscrivi ogni momento mettendoti come protagonista. Non "l'azienda ha implementato" ma "io ho progettato e guidato l'implementazione di". Non "il team ha risolto" ma "ho coordinato un team di X persone attraverso Y per raggiungere Z".
+
+<strong>Step 3 — La Generalizzazione del Metodo.</strong> Estrai da ogni caso studio il principio che puoi applicare altrove. "In quel contesto ho imparato che quando si ha a che fare con X tipo di sistema, la variabile critica è sempre Y." Questo trasforma un'esperienza specifica in un framework vendibile.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Caso Studio — La Rettifica (min 30–48)</div>
+        <div class="script-text">Ti racconto il caso studio più potente che conosco direttamente: il libro "La Rettifica".
+
+L'autore si trova in una situazione in cui la narrativa ufficiale di una multinazionale lo posiziona in modo sfavorevole. La risposta convenzionale sarebbe avvocati, busillis legale, silenzio difensivo.
+
+La risposta narrativa è completamente diversa: scrivere il libro. Documentare i fatti. Costruire una contronarrazione pubblica, verificabile, con dati e timeline precisi.
+
+Il risultato? La multinazionale — con tutti i suoi avvocati, il suo dipartimento comunicazione, il suo brand consolidato — si trova a dover rispondere a un singolo professionista che ha scelto di essere l'autore della propria storia.
+
+<strong>Qual è il principio generalizzabile?</strong>
+
+Chi controlla la narrativa scritta controlla la narrativa. I documenti durano più delle conversazioni. Le prove pubbliche sono più difficili da smentire delle comunicazioni private. E chi scrive per primo definisce il frame entro cui tutti gli altri devono rispondere.</div>
+        <div class="script-callout">
+          <strong>PRINCIPIO OPERATIVO — La Narrativa Scritta come Scudo e Spada</strong>
+          In qualsiasi contesto di conflitto narrativo — con un datore di lavoro, un cliente, un competitor — chi ha la documentazione vince sul chi ha le impressioni. Inizia oggi a documentare il tuo lavoro non solo come archivio tecnico ma come archivio narrativo. Ogni email importante, ogni risultato significativo, ogni feedback positivo è un mattone del tuo Dossier.
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura — Il Mandato del Modulo (min 48–55)</div>
+        <div class="script-text">Hai completato il Modulo 1. Ecco cosa hai acquisito:
+
+Sai che il valore oggettivo non esiste come leva economica — esiste solo il valore percepito, e la percezione si gestisce.
+
+Sai che ogni interlocutore ha un sistema operativo mentale diverso, e che la tua narrativa deve adattarsi al canale, non al contrario.
+
+Sai che ogni esperienza professionale è contemporaneamente un asset aziendale e un capitale narrativo personale — e che il ribaltamento del soggetto trasforma il primo nel secondo.
+
+Nel Modulo 2 costruiamo l'architettura. Come strutturare una storia che cattura, trattiene e converte. Il framework scalabile che puoi applicare a qualsiasi contesto — da un'email di 70 parole a un keynote di 40 minuti.
+
+L'esercizio finale di questo modulo è il Ribaltamento Narrativo: prendi la tua bio professionale attuale e riscrivila con te come eroe della storia. È il primo atto concreto del tuo percorso da Esecutore a Creatore.</div>
+      </div>
+    `)}
+  </div>
+
+  <div class="section">
+    ${sectionHdr('esercizi pratici','3')}
+    <div class="ex-grid">
+      ${exCard('⚡','Audit del Valore Percepito','Esercizio di autanalisi',
+        'Identifica i tuoi 3 risultati più significativi degli ultimi 6 mesi. Per ognuno scrivi la versione "tecnica" come la descrivi ora, e la versione "narrativa" orientata al decisore.',
+        [{label:'Risultato 1 — Versione tecnica attuale',ph:'Come descrivo oggi questo risultato...',rows:2},{label:'Risultato 1 — Versione narrativa per il decisore',ph:'Come dovrei descriverlo per avere impatto sul budget/promozione...',rows:3},{label:'Chi sa di questo risultato oggi?',ph:'Manager, peer, cliente, nessuno...',rows:1},{label:'Chi dovrebbe saperlo e non lo sa?',ph:'CFO, board, cliente enterprise...',rows:1}],
+        'Documento 1 pagina con 3 risultati riscritti + lista di distribuzione target'
+      )}
+      ${exCard('🎯','Mappa Psicologica dell\'Audience','Template strategico',
+        'Scegli il tuo interlocutore più importante dei prossimi 30 giorni. Compila la matrice psicologica completa prima di qualsiasi comunicazione.',
+        [{label:'Chi è il mio interlocutore target?',ph:'Ruolo, azienda, contesto...',rows:1},{label:'Qual è la sua paura primaria in questo momento?',ph:'Cosa lo tiene sveglio la notte relativamente al mio ambito...',rows:2},{label:'Qual è il suo obiettivo nascosto (non dichiarato)?',ph:'Cosa vuole davvero, oltre a ciò che dice...',rows:2},{label:'Che linguaggio attiva la sua fiducia?',ph:'Dati, casi studio, garanzie, visione...',rows:2},{label:'Cosa genera resistenza in lui?',ph:'Complessità, incertezza, perdita di controllo...',rows:2}],
+        'Matrice compilata + riscrittura di una comunicazione esistente adattata al sistema operativo identificato'
+      )}
+      ${exCard('🔄','Il Ribaltamento Narrativo','Riscrittura professionale',
+        'Prendi la tua bio o presentazione professionale attuale. Ricostruiscila con te come eroe della storia e l\'azienda come contesto/palcoscenico.',
+        [{label:'La tua bio/presentazione attuale (copia qui)',ph:'Come ti descrivi oggi...',rows:3},{label:'I tuoi 3 risultati chiave con te come protagonista',ph:'Non "ho lavorato in X", ma "in X ho costruito/risolto/guidato..."',rows:4},{label:'Il metodo generalizzabile che hai sviluppato',ph:'Il principio che hai imparato e che ora applichi ovunque...',rows:2},{label:'La nuova bio ribaltata (max 200 parole)',ph:'La versione in cui sei l\'autore, non il dipendente...',rows:4}],
+        'Bio professionale riscritta (max 200 parole) + versione breve da LinkedIn (max 60 parole)'
+      )}
+    </div>
+  </div>
+
+  <div class="section">
+    ${sectionHdr('scheda autovalutazione')}
+    ${evalSection('m1',[
+      {c:'Identifico il valore percepito come leva separata dal valore oggettivo',n:'Test: sai citare 2 esempi concreti del tuo settore in cui la narrativa ha vinto sul merito tecnico'},
+      {c:'Mappo psicologicamente il mio interlocutore prima di comunicare',n:'Non dopo. Prima. Il profilo va costruito prima di aprire il documento'},
+      {c:'So distinguere i 4 sistemi operativi dell\'audience e adatto il mio messaggio',n:'Manager interno, cliente enterprise, investitore, community: linguaggi e trigger diversi'},
+      {c:'La mia storia professionale mi posiziona come autore, non come esecutore',n:'Test: togli il nome dell\'azienda dalla tua bio. Rimane una storia potente?'},
+      {c:'Sto documentando il mio capitale narrativo in modo sistematico',n:'Non solo output tecnici: momenti di leadership, decisioni difficili, crisi gestite'},
+      {c:'So eseguire il ribaltamento del soggetto su qualsiasi esperienza professionale',n:'Prendi un task recente e riscrivi in 60 secondi con te come protagonista'}
+    ])}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ─── MODULE 2 ───────────────────────────────────────────────────────
+function renderM2(){
+  return `<div class="hero anim" style="--hero-accent:var(--blue);--hero-glow:var(--blue-dim)">
+    <div class="hero-eyebrow" style="color:var(--blue);border-color:var(--blue-dim)">Modulo 02 · Architettura della Storia · 3 Lezioni · 2h 45min</div>
+    <div class="hero-h1">Il <em>Framework</em> Scalabile</div>
+    <div class="hero-sub">Come strutturare un messaggio che cattura, trattiene e converte. Il Viaggio dell'Eroe applicato alle dinamiche di potere aziendali, la tecnica del contrasto come leva cognitiva, il dettaglio letale come ancora di credibilità.</div>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--blue)"></div>Prerequisiti: Modulo 01</div>
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--text3)"></div>Livello: Intermedio</div>
+    </div>
+  </div>
+  <div class="section" style="--lesson-accent:var(--blue)">
+    ${sectionHdr('lezioni — script completi','3')}
+    ${lessonCard('lesson-2-1','L2.1','Il Viaggio dell\'Eroe nel Business','Adattare la struttura narrativa più potente della storia umana alle situazioni aziendali reali.',['framework','struttura','viaggio eroe','business storytelling'],'55 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–5)</div>
+        <div class="script-text">Il Viaggio dell'Eroe è la struttura narrativa più testata nella storia dell'umanità. Dall'Odissea a Star Wars, dal Vangelo al pitch di Airbnb — lo stesso schema ripetuto perché funziona a livello neurobiologico.
+
+Il problema è che nei corsi di business storytelling te lo insegnano in modo astratto e accademico. "Definisci il tuo problema, mostra il conflitto, presenta la soluzione." Inutile.
+
+Oggi lo rendiamo chirurgico. Ti mostro le 4 fasi adattate esattamente al contesto in cui ti muovi: l'enterprise, la negoziazione, la promozione, il pitch.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Le 4 Fasi — Versione Business (min 5–40)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Fase 1 — Lo Stato Iniziale (Il Mondo Ordinario)</div>
+          <div class="key-concept-body">Non è una descrizione del contesto. È la definizione del gap tra come le cose funzionano e come dovrebbero funzionare. Deve contenere: la situazione esistente, chi è impattato, e una tensione latente — qualcosa che non è ancora esploso ma che potrebbe.<br><br><strong>Formula:</strong> "In [contesto], [stakeholder] gestiva [processo] con [metodo], il che creava [tensione latente]."</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Fase 2 — L'Incidente Scatenante (La Chiamata)</div>
+          <div class="key-concept-body">Il momento in cui la tensione latente diventa crisi visibile. Non deve essere drammatico — deve essere specifico. Un dato anomalo. Un'email dal cliente. Un alert alle 2 di notte. La specificità è ciò che trasforma un'aneddoto generico in una storia credibile.<br><br><strong>Formula:</strong> "Il [data/momento], [evento specifico] ha reso evidente che [il sistema stava per cedere / il rischio stava materializzando]."</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Fase 3 — L'Abisso (La Prova Suprema)</div>
+          <div class="key-concept-body">Il momento di massima posta in gioco. Qui non parli di cosa hai fatto — parli di cosa sarebbe successo se non avessi agito. L'Abisso rende chiaro il valore dell'intervento per contrasto.<br><br><strong>Formula:</strong> "Se non avessimo agito entro [timeframe], [conseguenza 1], [conseguenza 2], [conseguenza economica/reputazionale]."</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Fase 4 — La Risoluzione (Il Ritorno con l'Elisir)</div>
+          <div class="key-concept-body">Non solo "abbiamo risolto". Ma cosa hai portato indietro dal viaggio: il metodo, il framework, la competenza che ora puoi applicare altrove. L'Elisir è la generalizzazione — è ciò che trasforma un singolo caso in un principio vendibile.<br><br><strong>Formula:</strong> "Attraverso [intervento specifico] abbiamo [risultato quantificato]. Da quella esperienza ho sviluppato [metodo/framework] che oggi applico ogni volta che [situazione analoga]."</div>
+        </div>
+        <div class="script-callout">
+          <strong>ESEMPIO COMPLETO — Data breach prevention</strong>
+          Stato Iniziale: "In un'infrastruttura finanziaria con 200k transazioni giornaliere, il team di sicurezza gestiva gli alert manualmente con un processo che produceva 40% di falsi positivi."<br>
+          Incidente: "Il 14 marzo, un pattern anomalo nei log ha mostrato accessi sequenziali su 3 sotto-reti in 4 minuti. Un pattern che il nostro sistema classificava come normale."<br>
+          Abisso: "Se non avessimo intercettato entro 2 ore, l'exfiltration stimata era di 180k record clienti, con exposure GDPR di €4.2M e notifica obbligatoria al regolatore."<br>
+          Risoluzione: "Ho ridisegnato il sistema di scoring degli alert introducendo correlazione cross-subnet. Falsi positivi ridotti al 7% in 6 settimane. Il metodo è ora parte del nostro runbook standard."
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Scalabilità del Framework (min 40–50)</div>
+        <div class="script-text">La potenza del framework è che scala su qualsiasi lunghezza e contesto.
+
+<strong>70 parole</strong> — un aggiornamento email. Una riga per fase.
+<strong>3 minuti</strong> — un update in stand-up. 45 secondi per fase.
+<strong>20 minuti</strong> — una presentazione al management. 5 minuti per fase.
+<strong>45 minuti</strong> — un keynote o una sessione di consulenza. 10 minuti per fase con approfondimenti.
+
+La struttura rimane invariata. Cambiano solo la profondità e il dettaglio.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura (min 50–55)</div>
+        <div class="script-text">Nella prossima lezione vediamo la Tecnica del Contrasto — come rendere visibile ciò che l'audience dava per scontato e creare l'urgenza cognitiva che trasforma un interlocutore da passivo ad attivo.
+
+L'esercizio di questa lezione ti chiede di mappare un progetto reale sulle 4 fasi. Sii chirurgico. La vaghezza uccide la credibilità narrativa.</div>
+      </div>
+    `)}
+
+    ${lessonCard('lesson-2-2','L2.2','La Tecnica del Contrasto','Come rendere visibile la distanza tra status quo disfunzionale e visione ottimizzata per creare urgenza cognitiva.',['contrasto','gap analysis','urgenza','visione'],'50 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–5)</div>
+        <div class="script-text">Il cervello umano non elabora i valori assoluti. Elabora le differenze.
+
+Non percepiamo quanto pesa un oggetto — percepiamo quanto è più pesante o più leggero di quello che reggeva la mano prima. Non valutiamo un prezzo in senso assoluto — lo valutiamo in relazione al prezzo che ci aspettavamo, o al prezzo alternativo.
+
+Questa è la base neuroscientifica della Tecnica del Contrasto. E spiega perché le storie che mostrano solo la soluzione ottimale sono meno convincenti delle storie che mostrano prima il problema al suo peggio, e poi la soluzione.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">I 3 Tipi di Contrasto Narrativo (min 5–35)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Contrasto Tipo 1 — Prima / Dopo</div>
+          <div class="key-concept-body">Il più diretto. Mostra lo stato disfunzionale con dettaglio vivido, poi lo stato ottimizzato con lo stesso livello di dettaglio. Il gap tra i due è il valore del tuo intervento.<br><br>Errore comune: descrivere il "prima" in modo vago e il "dopo" in modo preciso. Il contrasto funziona solo se entrambi i lati sono ugualmente concreti.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Contrasto Tipo 2 — Aspettativa / Realtà</div>
+          <div class="key-concept-body">Potentissimo in contesti di audit e assessment. Mostri cosa il sistema doveva garantire (SLA, compliance, standard di settore) e cosa stava consegnando realmente. Il gap tra aspettativa e realtà è immediatamente comprensibile a qualsiasi stakeholder, anche non tecnico.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Contrasto Tipo 3 — Scenario A / Scenario B</div>
+          <div class="key-concept-body">Usato nelle decisioni: mostri due possibili percorsi con i relativi outcome. Uno è il percorso che proponi, l'altro è lo status quo o l'alternativa. Il decisore non valuta il tuo scenario in senso assoluto — lo valuta per contrasto con l'alternativa.</div>
+        </div>
+        <div class="script-callout">
+          <strong>ESEMPIO — Contrasto Aspettativa/Realtà in un contesto compliance</strong>
+          "Il contratto prevedeva uptime del 99.9%. Nei 6 mesi precedenti il nostro intervento, l'uptime effettivo era 97.3%. In termini concreti: 2.6% di downtime su 6 mesi equivale a 113 ore di servizio non erogato. Per un'infrastruttura con €18k/ora di revenue, stiamo parlando di €2.03M di mancato fatturato in 6 mesi — non visibili come voce di costo, invisibili come opportunità mancata."
+        </div>
+        <div class="script-text">Nota la struttura: numero contrattuale → numero reale → traduzione in tempo → traduzione in euro. Ogni passaggio amplifica la visibilità del gap. Alla fine, il decisore ha una comprensione precisa del costo dell'inazione — anche se non è un tecnico.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Il Contrasto come Strumento di Negoziazione (min 35–45)</div>
+        <div class="script-text">La Tecnica del Contrasto è particolarmente potente nelle negoziazioni sul prezzo o sul budget.
+
+Invece di difendere il tuo prezzo in senso assoluto, costruisci il contrasto tra il costo del tuo intervento e il costo dell'alternativa (o del non intervento).
+
+"La mia consulenza costa €X. Il sistema attuale vi sta costando €Y al mese in inefficienza. Il payback period è di Z settimane. La domanda non è se potete permettervi il mio intervento — è se potete permettervi di continuare senza."
+
+Non è retorica. È matematica applicata al sistema cognitivo del decisore.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura (min 45–50)</div>
+        <div class="script-text">Nella prossima lezione vediamo il Dettaglio Letale — lo strumento che rende una storia credibile e inattaccabile. Perché la vaghezza è l'antitesi della credibilità, e i numeri precisi fanno un lavoro che le affermazioni generali non possono fare.</div>
+      </div>
+    `)}
+
+    ${lessonCard('lesson-2-3','L2.3','Il Dettaglio Letale','Come usare dati specifici, numeri precisi e micro-dettagli per ancorare la narrazione alla realtà e renderla inattaccabile.',['dati','credibilità','specificità','anchor'],'50 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–5)</div>
+        <div class="script-text">"Abbiamo ridotto i tempi significativamente." vs "Abbiamo ridotto i tempi da 73 giorni a 12 giorni in 8 settimane."
+
+Qual delle due affermazioni ti fa credere che la persona sappia di cosa sta parlando?
+
+Il Dettaglio Letale non è solo una tecnica di credibilità. È un meccanismo cognitivo: il cervello usa la specificità come proxy per la competenza. Chi conosce i numeri precisi ha vissuto la situazione. Chi usa approssimazioni, probabilmente no.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Anatomia del Dettaglio Letale (min 5–35)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">I 4 Tipi di Dettaglio Letale</div>
+          <div class="key-concept-body">
+            <strong>1. Il Numero Preciso:</strong> Non "alcune settimane" ma "73 giorni". Non "team grande" ma "11 persone in 3 time zone".<br>
+            <strong>2. Il Dettaglio Geografico/Organizzativo:</strong> Non "operazione complessa" ma "3 continenti, 2 valute, 1 regolatore esterno".<br>
+            <strong>3. Il Dato Economico Specifico:</strong> Non "perdita significativa" ma "€2.3M di exposure GDPR nelle 48 ore successive".<br>
+            <strong>4. Il Timestamp:</strong> Non "durante la crisi" ma "alle 2:47 del mattino di giovedì, quando il sistema ha mostrato il primo alert".
+          </div>
+        </div>
+        <div class="script-text">Il timestamp è il dettaglio letale più potente perché segnala un livello di presenza e responsabilità che nessuna affermazione generica può comunicare. "Alle 2:47 del mattino" dice tutto sul tuo coinvolgimento senza che tu debba dirlo esplicitamente.
+
+<strong>Come costruire il tuo archivio di dettagli letali.</strong>
+
+Inizia oggi a tenere un documento — chiamalo "Archivio Numeri" — dove registri i dati specifici di ogni progetto significativo: date precise, cifre esatte, dimensioni delle squadre, timeline, KPI prima e dopo. Non hai bisogno di usarli tutti. Ma averli disponibili ti permette di essere specifico quando la specificità conta.</div>
+        <div class="script-callout">
+          <strong>ESERCIZIO MENTALE — La Prova dello Specifico</strong>
+          Prendi qualsiasi affermazione che fai regolarmente sul tuo lavoro. Chiediti: "Potrei renderla più specifica con un numero, una data, una dimensione, un nome?" Se la risposta è sì e non lo stai facendo, stai lasciando credibilità sul tavolo.
+        </div>
+        <div class="script-text">Il secondo uso del Dettaglio Letale è nell'ancorare le affermazioni alla realtà percettiva dell'audience.
+
+"Questo sistema gestisce traffico elevato" è astratto.
+"Questo sistema gestisce 340.000 richieste al minuto con latenza media di 12ms al 99° percentile" è concreto — e fa capire immediatamente che stai parlando di un sistema production-grade serio, anche a un interlocutore che non conosce i numeri del settore.
+
+Il dettaglio letale non è per impressionare. È per far sì che l'interlocutore non abbia domande di chiarimento. Una storia piena di dettagli letali è una storia che risponde alle obiezioni prima ancora che vengano formulate.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Il Dettaglio Letale come Scudo Legale e Reputazionale (min 35–45)</div>
+        <div class="script-text">Qui il Dettaglio Letale assume una funzione difensiva.
+
+In qualsiasi contesto in cui la tua narrativa potrebbe essere contestata — una performance review, una disputa contrattuale, una comunicazione pubblica — la specificità è il tuo scudo.
+
+"Lei non ha consegnato nei tempi" è un'affermazione contestabile.
+"Ho consegnato il 14 marzo, tre giorni prima della scadenza contrattuale del 17 marzo, come documentato nell'email alle 17:23 con ricevuta di lettura confermata" non è contestabile.
+
+I documenti con timestamp e dati specifici sono narrativamente inattaccabili. Le comunicazioni vaghe sono vulnerabili.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura (min 45–50)</div>
+        <div class="script-text">Hai completato il Modulo 2. Il tuo toolkit narrativo ha ora una struttura (il Viaggio dell'Eroe), una leva cognitiva (il Contrasto) e un'ancora di credibilità (il Dettaglio Letale).
+
+Nel Modulo 3 passiamo alla scrittura operativa: come queste strutture si traducono in email che non possono essere ignorate, post LinkedIn che attraggono il tuo cliente ideale, e documenti che costruiscono la tua posizione nel sistema.</div>
+      </div>
+    `)}
+  </div>
+
+  <div class="section">
+    ${sectionHdr('esercizi pratici','3')}
+    <div class="ex-grid">
+      ${exCard('📐','Mappa il Tuo Viaggio','Framework applicato',
+        'Prendi un progetto reale degli ultimi 12 mesi. Compila le 4 fasi del framework con il livello di specificità di un incident report.',
+        [{label:'Stato Iniziale — Chi, cosa, tensione latente',ph:'"In [contesto], [chi] gestiva [processo] con [metodo], creando [tensione]..."',rows:3},{label:'Incidente Scatenante — Evento specifico con data/ora',ph:'"Il [data], [evento preciso] ha reso evidente che..."',rows:3},{label:"Abisso — Le conseguenze dell'inazione",ph:'"Se non avessimo agito entro [timeframe], [conseguenza 1], [economica]..."',rows:3},{label:'Risoluzione — Risultato + metodo generalizzabile',ph:'"Attraverso [intervento] abbiamo [risultato]. Il principio che ho imparato..."',rows:3}],
+        'Framework compilato + pitch verbale di 60 secondi pronto per la prossima riunione'
+      )}
+      ${exCard('🔍','Audit del Contrasto','Analisi before/after',
+        'Lista 5 situazioni che hai gestito. Per ognuna costruisci il contrasto con numeri reali — non approssimazioni.',
+        [{label:'Situazione 1 — Stato PRIMA (con numeri)',ph:'Uptime 97.3%, 113h downtime, €2M mancato fatturato...',rows:2},{label:'Situazione 1 — Stato DOPO (con numeri)',ph:'Uptime 99.8%, 8h downtime annuo, €0.3M impatto...',rows:2},{label:'Il Delta — Valore del tuo intervento',ph:'Differenza in termini di tempo, denaro, rischio, reputazione...',rows:2}],
+        'Tabella 5 situazioni con before/after quantificato + versione pitch per colloquio/negoziazione'
+      )}
+      ${exCard('🎲','Archivio Dettagli Letali','Database personale',
+        'Crea il tuo archivio di numeri reali. Per ogni progetto degli ultimi 2 anni: date precise, KPI, dimensioni, risultati quantificati.',
+        [{label:'Progetto / Situazione',ph:'Nome o descrizione breve...',rows:1},{label:'Numeri chiave (tutti quelli che ricordi)',ph:'Timeline, team size, KPI prima/dopo, cifre economiche, timestamp critici...',rows:3},{label:'Il Dettaglio più specifico e potente',ph:'Quello che nessun altro potrebbe sapere se non era lì...',rows:2}],
+        'Database personale con almeno 10 situazioni documentate con numeri specifici'
+      )}
+    </div>
+  </div>
+
+  <div class="section">
+    ${sectionHdr('scheda autovalutazione')}
+    ${evalSection('m2',[
+      {c:'Struttura ogni storia con le 4 fasi senza bisogno di consultare il framework',n:'La struttura deve diventare automatica, non un checklist'},
+      {c:'L\'Incidente Scatenante che descrivo ha sempre una data/ora/evento specifico',n:'Non "ad un certo punto" — "il 14 marzo alle 02:47"'},
+      {c:'L\'Abisso che mostro quantifica le conseguenze dell\'inazione in termini economici o reputazionali',n:'Il decisore deve capire il costo del non-agire'},
+      {c:'La mia Risoluzione include sempre il principio generalizzabile, non solo il risultato specifico',n:'Il metodo è più vendibile del singolo caso'},
+      {c:'Uso il Contrasto prima di difendere qualsiasi prezzo o budget',n:'Il valore si percepisce per differenza, non in assoluto'},
+      {c:'I miei dettagli letali sono numeri reali, non approssimazioni',n:'Non "qualche settimana" — "73 giorni". Sempre.'}
+    ])}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ─── MODULE 3 ───────────────────────────────────────────────────────
+function renderM3(){
+  return `<div class="hero anim" style="--hero-accent:var(--amber);--hero-glow:var(--amber-dim)">
+    <div class="hero-eyebrow" style="color:var(--amber);border-color:var(--amber-dim)">Modulo 03 · Storytelling Tattico · 3 Lezioni · 2h 50min</div>
+    <div class="hero-h1">La Scrittura <em>Istituzionale</em></div>
+    <div class="hero-sub">Le strutture dei moduli precedenti applicate ai canali di comunicazione reale: l'email come strumento di potere, LinkedIn come piattaforma di posizionamento, il Dossier come archivio narrativo difensivo e offensivo.</div>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--amber)"></div>Prerequisiti: Moduli 01–02</div>
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--text3)"></div>Livello: Avanzato</div>
+    </div>
+  </div>
+  <div class="section" style="--lesson-accent:var(--amber)">
+    ${sectionHdr('lezioni — script completi','3')}
+    ${lessonCard('lesson-3-1','L3.1','L\'Email come Arma di Precisione','Strutturare comunicazioni che creano contesti favorevoli, documentano posizioni e non possono essere ignorate.',['email','framework','negoziazione','documentazione'],'55 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–5)</div>
+        <div class="script-text">L'email è il medium più sottovalutato del business moderno.
+
+La maggior parte delle persone la usa come contenitore di informazioni. La usa per trasmettere. Raramente per costruire.
+
+Un'email ben costruita fa tre cose che una conversazione non può fare: crea un record permanente, definisce il frame della situazione, e posiziona chi scrive come l'agente razionale della storia. Un'email mal costruita fa l'opposto: è ignorabile, ambigua, e lascia tutto il potere interpretativo al ricevente.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Il Framework P–D–SP (min 5–35)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Premessa — Dati — Scadenza Passiva</div>
+          <div class="key-concept-body">
+            <strong>Premessa:</strong> Una frase che definisce il contesto e la posta in gioco. Non "ti scrivo riguardo al progetto X" ma "questo messaggio documenta lo stato attuale del progetto X e le azioni necessarie entro [data]."<br><br>
+            <strong>Dati:</strong> I fatti rilevanti, con date, numeri, riferimenti a comunicazioni precedenti. Non opinioni. Non interpretazioni. Fatti verificabili. Ogni dato è un mattone della tua posizione narrativa.<br><br>
+            <strong>Scadenza Passiva:</strong> Non una richiesta — una dichiarazione di intenzione con deadline implicita. "In assenza di risposta entro [data], procederò con [azione]." La Scadenza Passiva trasferisce il costo dell'inazione al ricevente.
+          </div>
+        </div>
+        <div class="script-callout">
+          <strong>ESEMPIO — Email di escalation con P–D–SP</strong>
+          Oggetto: Documentazione stato progetto Alpha — azioni richieste entro 15/04<br><br>
+          [Premessa] Questo messaggio documenta lo stato attuale del progetto Alpha e le condizioni necessarie per procedere con la fase 2 come da contratto del 03/01/2025.<br><br>
+          [Dati] Al 10/04: deliverable D3 non consegnato (scadenza contrattuale 01/04, 9 giorni di ritardo). Due richieste di aggiornamento senza risposta: 03/04 ore 10:15, 07/04 ore 14:30. Il ritardo impatta il milestone M4 previsto per 01/05, con potenziale penale contrattuale di €15k secondo art. 8.2.<br><br>
+          [Scadenza Passiva] In assenza di aggiornamento scritto entro il 15/04, sarò necessitato ad attivare la procedura di escalation prevista dall'art. 12 del contratto e a documentare il ritardo nel report mensile al board.
+        </div>
+        <div class="script-text">Nota cosa fa questa email: non è aggressiva. Non è emotiva. È chirurgicamente documentata. Ogni elemento è verificabile. La Scadenza Passiva non è una minaccia — è una descrizione di cosa accadrà se il ricevente sceglie di non agire.
+
+L'email crea un contesto in cui l'inazione del ricevente ha un costo. E documenta permanentemente che tu hai agito con correttezza procedurale.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Email come Strumento di Posizionamento (min 35–48)</div>
+        <div class="script-text">La funzione più sottile dell'email non è la comunicazione. È la creazione del record.
+
+Ogni email importante che scrivi costruisce un archivio narrativo della tua condotta professionale. Le email sono le prove del processo — e nel lungo termine, determinano chi viene percepito come l'agente razionale e responsabile in qualsiasi situazione controversa.
+
+<strong>Le 5 regole del record narrativo:</strong></div>
+        <ul class="script-list">
+          <li>Dopo ogni riunione importante, manda un "summary dei punti discussi" — anche se nessuno lo ha chiesto</li>
+          <li>Documenta ogni accordo verbale con una email di conferma entro 24 ore</li>
+          <li>Quando rilevi un problema, invia la segnalazione per iscritto prima che diventi crisi</li>
+          <li>Usa oggetti email che funzionano come titoli di documento: precisi, informativi, cercabili</li>
+          <li>Includi sempre il riferimento alle comunicazioni precedenti per costruire la catena documentale</li>
+        </ul>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura (min 48–55)</div>
+        <div class="script-text">La prossima lezione è sul copywriting per LinkedIn. Qui lo sforzo è diverso: non si tratta di documentare — si tratta di attrarre. Ma la struttura narrativa di base è la stessa: hook che cattura, sviluppo che trattiene, chiusura che converte.</div>
+      </div>
+    `)}
+    ${lessonCard('lesson-3-2','L3.2','Il Copywriting per LinkedIn','Come tradurre competenze tecniche in contenuto che attrae headhunter, investitori e clienti High-Ticket.',['linkedin','copywriting','personal branding','contenuto'],'55 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–5)</div>
+        <div class="script-text">LinkedIn per un professionista IT ha un problema specifico: il tuo mestiere è complesso, tecnico, e difficile da comunicare a chi non è nel settore. E chi decide i budget — il tuo prossimo cliente enterprise, il tuo prossimo datore di lavoro, l'investitore che vuoi incontrare — spesso non è nel settore.
+
+La soluzione non è semplificare la tua competenza. È <strong>tradurre il tuo impatto</strong> in un linguaggio che il tuo interlocutore target può connettere alla propria realtà.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">La Struttura del Post ad Alto Impatto (min 5–35)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Hook — Sviluppo — Risoluzione — CTA</div>
+          <div class="key-concept-body">
+            <strong>Hook (1–2 righe):</strong> L'unica cosa che l'algoritmo mostra prima del "continua a leggere". Deve creare una tensione cognitiva — una domanda, un'affermazione contro-intuitiva, un numero sorprendente. Se il hook non funziona, il resto è invisibile.<br><br>
+            <strong>Sviluppo (5–8 righe):</strong> La storia con le 4 fasi. Stato iniziale, incidente, abisso, risoluzione. Con dettagli letali.<br><br>
+            <strong>Risoluzione (2–3 righe):</strong> Il principio generalizzabile. Cosa impara il lettore che può applicare alla sua situazione.<br><br>
+            <strong>CTA (1 riga):</strong> Una domanda aperta che invita all'engagement. Non "seguimi" — una domanda genuina che stimola la riflessione del lettore sulla sua situazione.
+          </div>
+        </div>
+        <div class="script-callout">
+          <strong>ESEMPIO — Post LinkedIn per professionista IT senior</strong>
+          [Hook] Ho aiutato un'azienda a risparmiare €800k. Nessuno me lo ha chiesto.<br><br>
+          [Sviluppo] Stavo facendo un'analisi di routine su un sistema di fatturazione. Nei log, un pattern anomalo: transazioni duplicate su una specifica categoria di clienti. Non era un bug dichiarato. Era una perdita silenziosa. In 18 mesi: 1.247 transazioni duplicate, €823k non recuperati, zero alert.<br><br>
+          [Risoluzione] Il problema non era tecnico — era narrativo. Nessuno aveva costruito la storia di "cosa dovrebbe succedere in questo sistema". Senza quella storia, l'anomalia era invisibile. La prima cosa che faccio ora in qualsiasi assessment: costruisco la narrativa del comportamento atteso, poi cerco le deviazioni.<br><br>
+          [CTA] Nel tuo sistema, chi è responsabile di sapere cosa "dovrebbe" succedere?
+        </div>
+        <div class="script-text"><strong>I 3 Errori più comuni nei post LinkedIn dei tecnici:</strong></div>
+        <ol class="script-number-list">
+          <li><strong>Parlare di tecnologie, non di impatto.</strong> "Ho implementato Kubernetes" dice al lettore cosa hai fatto. "Ho ridotto il deployment time del 70%, permettendo al team di rilasciare feature ogni settimana invece che ogni mese" dice al lettore cosa è cambiato.</li>
+          <li><strong>Usare il noi aziendale invece dell'io professionale.</strong> "Abbiamo completato la migrazione" annulla la tua presenza. "Ho coordinato la migrazione di 12 sistemi legacy in 4 mesi, gestendo 3 fornitori e zero downtime" è un caso studio personale.</li>
+          <li><strong>Finire senza invito alla conversazione.</strong> LinkedIn è una piattaforma di relazioni, non di broadcasting. Ogni post dovrebbe aprire una porta, non chiuderla.</li>
+        </ol>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Piano Editoriale Strategico (min 35–48)</div>
+        <div class="script-text">La consistenza è più potente della viralità. Un post al giorno per 90 giorni costruisce un posizionamento che un post virale non può costruire.
+
+<strong>Mix editoriale consigliato per un professionista IT senior:</strong>
+40% Case study narrativi (le tue storie con 4 fasi e dettagli letali)
+30% Principi e framework (cosa hai imparato, generalizzato e puoi insegnare)
+20% Osservazioni di settore (cosa vedi nel mercato che altri non vedono)
+10% Punti di vista controversi (dove sei in disaccordo con il consenso del tuo settore)</div>
+        <div class="script-callout">
+          <strong>REGOLA — Il Test dell'Interlocutore Ideale</strong>
+          Prima di pubblicare, chiediti: "Se il mio cliente/datore di lavoro/investitore ideale leggesse questo post, capirebbe immediatamente perché dovrebbe lavorare con me?" Se la risposta non è sì, riscrivi.
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura (min 48–55)</div>
+        <div class="script-text">Nella prossima lezione costruiamo il Dossier — lo strumento narrativo più potente che hai per difenderti e promuoverti simultaneamente. È la sintesi di tutto ciò che hai imparato finora, organizzata in un formato che può sopravvivere alla tua assenza.</div>
+      </div>
+    `)}
+    ${lessonCard('lesson-3-3','L3.3','Creare il Dossier','Come organizzare le prove del proprio valore in un formato narrativo permanente, difensivo e commercialmente potente.',['dossier','documentazione','archivio','difesa'],'50 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–5)</div>
+        <div class="script-text">Il Dossier è il tuo asset narrativo più potente e più ignorato.
+
+Non è un portfolio. Non è un CV. È qualcosa di più preciso: un documento che organizza le prove del tuo valore in una struttura narrativa che può essere letta, compresa e usata come base per decisioni — senza che tu sia presente a spiegarlo.
+
+Un CV lista cosa hai fatto. Il Dossier racconta perché quello che hai fatto è importante e come puoi farlo di nuovo.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Anatomia del Dossier (min 5–35)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Struttura in 5 Sezioni</div>
+          <div class="key-concept-body">
+            <strong>1. La Posizione:</strong> Chi sei, qual è il tuo unfair advantage, quale problema specifico risolvi meglio di chiunque altro nel tuo mercato. Max 150 parole.<br><br>
+            <strong>2. I Casi Studio:</strong> 3–5 storie con il framework 4 fasi, complete di dettagli letali. Ognuna termina con il principio generalizzabile.<br><br>
+            <strong>3. Le Evidenze:</strong> Screenshot, email, report, feedback documentati. Le prove che supportano le affermazioni dei casi studio.<br><br>
+            <strong>4. Il Metodo:</strong> Come lavori. Il processo che usi. Cosa rende il tuo approccio sistematico e non dipendente dalla fortuna o dal caso.<br><br>
+            <strong>5. La Prospettiva:</strong> Dove va il tuo settore, cosa vedi che altri non vedono, perché la tua posizione ti dà un vantaggio prospettico.
+          </div>
+        </div>
+        <div class="script-text">Il Dossier ha due funzioni che sembrano opposte ma sono complementari.
+
+<strong>Funzione Offensiva:</strong> È il documento che invii prima di un colloquio senior, di una negoziazione enterprise, di un pitch. Sostituisce il CV e il portfolio in un singolo strumento che racconta la storia completa.
+
+<strong>Funzione Difensiva:</strong> Quando la tua posizione narrativa viene attaccata — da un datore di lavoro, da un cliente insoddisfatto, da una multinazionale con un dipartimento legale — il Dossier è la tua contronarrazione documentata. È l'insieme delle prove organizzate in un formato che tiene.
+
+"La Rettifica" è un esempio estremo e pubblico di Dossier difensivo. Ma la logica è la stessa che puoi applicare in qualsiasi contesto professionale.</div>
+        <div class="script-callout">
+          <strong>PRINCIPIO — Il Dossier vive nel tempo</strong>
+          Il Dossier non si costruisce quando ne hai bisogno. Si costruisce continuamente, aggiungendo casi studio, evidenze e riflessioni man mano che accadono. Quando ne avrai bisogno — e prima o poi ne avrai bisogno — sarà già pronto. Chi inizia a costruirlo il giorno in cui si trova in difficoltà è già in ritardo.
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Il Dossier Commerciale vs il Dossier Difensivo (min 35–45)</div>
+        <div class="script-text">La distinzione pratica è nel tono e nel destinatario.
+
+Il <strong>Dossier Commerciale</strong> parla al cliente enterprise, all'investitore, al recruiter senior. Il suo frame è "ecco perché lavorare con me produce risultati misurabili". È proattivo, orientato al futuro, costruisce aspettativa positiva.
+
+Il <strong>Dossier Difensivo</strong> parla al sistema legale, al board, all'opinione pubblica. Il suo frame è "ecco i fatti, documentati, nell'ordine in cui sono accaduti". È reattivo nella funzione ma proattivo nella costruzione — si costruisce prima, si usa dopo.
+
+La versione più potente del Dossier è quella che funziona per entrambe le funzioni simultaneamente: racconta la storia in modo abbastanza positivo da essere commercialmente attraente, e abbastanza preciso e documentato da essere difensivamente robusto.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura — Recap Modulo 3 (min 45–50)</div>
+        <div class="script-text">Hai completato il Modulo 3. Le strutture narrative che hai imparato ora si sono tradotte in strumenti concreti: l'email come arma di precisione e costruttrice di record, LinkedIn come piattaforma di posizionamento sistematico, il Dossier come asset narrativo permanente.
+
+Nel Modulo 4 affrontiamo la dimensione fisica e vocale: una storia potente raccontata con la voce sbagliata, in un ambiente sbagliato, con la postura sbagliata, perde il 60% del suo impatto. È il momento di allineare il contenitore al contenuto.</div>
+      </div>
+    `)}
+  </div>
+  <div class="section">
+    ${sectionHdr('esercizi pratici','3')}
+    <div class="ex-grid">
+      ${exCard('✉️','Email ad Alto Impatto','Framework P–D–SP',
+        'Scegli una situazione reale che richiede un\'email importante (escalation, negoziazione, richiesta). Scrivi la versione attuale e quella con il framework.',
+        [{label:'Situazione — Cosa devo comunicare e a chi',ph:'Contesto, stakeholder, obiettivo della comunicazione...',rows:2},{label:'Premessa — Definizione del contesto e della posta in gioco',ph:'"Questo messaggio documenta..."',rows:2},{label:'Dati — Fatti verificabili con date e numeri',ph:'Ogni fatto con data, ora, riferimento documentale...',rows:4},{label:'Scadenza Passiva — Dichiarazione di intenzione',ph:'"In assenza di risposta entro [data], procederò con..."',rows:2}],
+        '2 versioni email a confronto (prima/dopo) + riflessione sulla differenza di potere narrativo'
+      )}
+      ${exCard('📱','LinkedIn Post Workshop','3 versioni comparative',
+        'Scrivi lo stesso contenuto in 3 versioni: generica, tecnica, narrativa. Usa una storia reale dal tuo lavoro.',
+        [{label:'La storia grezza — cosa è successo davvero',ph:'Descrizione informale dell\'evento/situazione...',rows:3},{label:'Hook — La prima riga che crea tensione',ph:'Un numero sorprendente, un\'affermazione contro-intuitiva...',rows:1},{label:'Sviluppo + Risoluzione (con dettagli letali)',ph:'La storia con 4 fasi, numeri precisi, principio generalizzabile...',rows:5},{label:'CTA — La domanda che apre la conversazione',ph:'Non "seguimi" — una domanda genuina sul tema...',rows:1}],
+        '3 draft del post + piano editoriale 30 giorni con mix 40/30/20/10'
+      )}
+      ${exCard('📁','Il Tuo Primo Dossier','Struttura completa',
+        'Costruisci la prima versione del tuo Dossier con le 5 sezioni. Anche se incompleto oggi, è la base che aggiornerai continuamente.',
+        [{label:'La Posizione — Chi sei e quale problema risolvi (max 150 parole)',ph:'Il tuo unfair advantage, il problema specifico, il mercato target...',rows:4},{label:'Caso Studio 1 — con framework 4 fasi',ph:'Stato iniziale, incidente, abisso, risoluzione + principio...',rows:5},{label:'Le Evidenze disponibili oggi',ph:'Email, report, feedback, risultati documentati da associare ai casi studio...',rows:3},{label:'Il tuo Metodo — come lavori sistematicamente',ph:'Il processo che rende i tuoi risultati replicabili, non casuali...',rows:3}],
+        'Dossier v1.0 strutturato (documento da aggiornare continuamente) + versione 1-pager per uso commerciale'
+      )}
+    </div>
+  </div>
+  <div class="section">
+    ${sectionHdr('scheda autovalutazione')}
+    ${evalSection('m3',[
+      {c:'Ogni email importante che scrivo ha un obiettivo narrativo preciso, non solo informativo',n:'Qual è l\'azione o la posizione che questa email deve creare?'},
+      {c:'Uso la Scadenza Passiva invece delle richieste dirette nelle situazioni di potere asimmetrico',n:'La SP trasferisce il costo dell\'inazione al ricevente'},
+      {c:'Dopo ogni riunione importante, mando un summary scritto entro 24 ore',n:'Il record narrativo si costruisce nel momento, non in retrospettiva'},
+      {c:'I miei post LinkedIn finiscono con una domanda che invita alla conversazione',n:'Non broadcasting — apertura di relazione'},
+      {c:'Il mio Dossier esiste in una forma anche parziale e viene aggiornato regolarmente',n:'Inizia oggi, anche con 1 caso studio. L\'abitudine vale più della perfezione iniziale'},
+      {c:'So distinguere e costruire il Dossier Commerciale vs il Dossier Difensivo',n:'Stessa struttura, tono e frame diversi in funzione del destinatario'}
+    ])}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ─── MODULE 4 ───────────────────────────────────────────────────────
+function renderM4(){
+  return `<div class="hero anim" style="--hero-accent:var(--coral);--hero-glow:var(--coral-dim)">
+    <div class="hero-eyebrow" style="color:var(--coral);border-color:var(--coral-dim)">Modulo 04 · Presenza Scenica · 3 Lezioni · 2h 30min</div>
+    <div class="hero-h1">Il <em>Dominio</em> Fisico e Digitale</div>
+    <div class="hero-sub">Una storia potente raccontata male perde il 60% del suo impatto. Prossemica digitale, modulazione vocale, gestione strategica delle obiezioni: il contenitore deve essere all'altezza del contenuto.</div>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--coral)"></div>Prerequisiti: Moduli 01–03</div>
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--text3)"></div>Livello: Avanzato</div>
+    </div>
+  </div>
+  <div class="section" style="--lesson-accent:var(--coral)">
+    ${sectionHdr('lezioni — script completi','3')}
+    ${lessonCard('lesson-4-1','L4.1','La Prossemica Digitale','Come l\'ambiente visivo di una videochiamata comunica autorità prima ancora che tu apra bocca.',['videochiamata','prossemica','ambiente','autorità'],'45 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–5)</div>
+        <div class="script-text">Prima che tu dica una parola in una videochiamata, il tuo interlocutore ha già elaborato decine di segnali non verbali e ha formato una prima impressione che influenzerà l'intera conversazione.
+
+Sfondo, illuminazione, posizione della camera, qualità audio, abbigliamento visibile. Nessuno di questi elementi è neutro. Ognuno comunica qualcosa sul tuo livello di professionalità, attenzione al dettaglio, e rispetto per l'interlocutore.
+
+Questa lezione non è estetica. È strategica.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">I 5 Elementi della Prossemica Digitale (min 5–35)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">1. L'Inquadratura</div>
+          <div class="key-concept-body">La camera deve essere all'altezza degli occhi o leggermente sopra. Mai sotto — angolazione verso l'alto comunica sudditanza e distorce il viso. Posizione: il tuo viso deve occupare il terzo superiore dello schermo, con spazio sopra la testa e spazio laterale. Non troppo vicino (invadente), non troppo lontano (distante). La regola dei terzi: immagina la frame divisa in 9 parti. I tuoi occhi devono stare nella linea dei terzi superiori.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">2. L'Illuminazione</div>
+          <div class="key-concept-body">La luce deve venire davanti a te, non da dietro. Un'illuminazione posteriore ti trasforma in una silhouette — il segnale visivo più forte di "questa persona non ha preparato questo incontro". La luce frontale preferita: luce naturale diffusa davanti alla scrivania, o un ring light posizionato all'altezza degli occhi. L'effetto è un volto chiaramente leggibile, senza ombre dure.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">3. Lo Sfondo</div>
+          <div class="key-concept-body">Lo sfondo racconta una storia sul tuo contesto professionale. Regola: deve essere pulito, ordinato, e non distraente. Non vuoto — una libreria ordinata, un muro con un elemento di design sobrio comunicano personalità senza distrarre. Evitare: sfondi virtuali sgranati (comunicano scarsa attenzione tecnica), stanze caotiche (comunicano mancanza di organizzazione), sfondi di ufficio aziendale generici (comunicano anonimato).</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">4. Il Contatto Visivo</div>
+          <div class="key-concept-body">Il contatto visivo in video richiede di guardare la camera, non lo schermo. È contro-intuitivo e richiede pratica. Ma è l'unico modo per trasmettere l'equivalente del contatto visivo diretto. Tecnica: posiziona una piccola freccia o punto adesivo vicino alla camera come reminder. Durante i momenti chiave della conversazione — quando fai un'affermazione importante, quando ascolti attentamente — torna alla camera.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">5. L'Assenza di Movimento Inutile</div>
+          <div class="key-concept-body">Movimenti nervosi — toccarsi il viso, spostarsi sulla sedia, guardare lo schermo laterale — comunicano insicurezza e mancanza di presenza. La stabilità fisica trasmette stabilità mentale. Tecnica: siediti con entrambi i piedi a terra, schiena dritta, mani visibili e ferme sul tavolo. L'immobilità consapevole è una forma di autorità.</div>
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Il Setup come Investimento Narrativo (min 35–40)</div>
+        <div class="script-text">Un setup video professionale non è un costo estetico. È un investimento nel tuo posizionamento.
+
+In un contesto in cui sempre più relazioni professionali si svolgono in remoto, il tuo ambiente digitale è il tuo ufficio. La qualità di quell'ambiente comunica il livello di serietà con cui tratti la tua professione.
+
+I clienti enterprise e gli investitori fanno videochiamata con decine di professionisti. La differenza tra chi ha curato il setup e chi no è immediatamente percepibile — e viene inconsciamente associata alla cura con cui quella persona gestirà il loro progetto.</div>
+      </div>
+    `)}
+    ${lessonCard('lesson-4-2','L4.2','La Modulazione Vocale','Come usare volume, tono, ritmo e silenzio come strumenti di autorità e persuasione.',['voce','silenzio','autorità','ritmo'],'50 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–5)</div>
+        <div class="script-text">La ricerca di Mehrabian sulla comunicazione è spesso fraintesa. Ma un principio è solido: quando contenuto verbale e segnali para-verbali sono in conflitto, il cervello crede ai segnali para-verbali.
+
+Puoi avere la storia più potente del mondo. Se la racconti con voce piatta, ritmo affrettato, e tono ansioso — il tuo interlocutore percepirà ansia e fretta, non la storia.
+
+La voce non è un veicolo neutro del contenuto. È parte del contenuto.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">I 4 Parametri Vocali (min 5–35)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">1. Il Ritmo</div>
+          <div class="key-concept-body">I professionisti tecnici parlano spesso troppo velocemente quando sono sotto pressione o quando conoscono bene un argomento. La velocità comunica nervosismo o imbarazzo, non competenza. Il ritmo autorevole è circa 130–140 parole al minuto — più lento di quanto ti sembri naturale. Tecnica: registra te stesso e conta le parole al minuto. Se superi 160 wpm regolarmente, stai comunicando ansia.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">2. Il Tono e il Registro</div>
+          <div class="key-concept-body">Il tono pacato — voce bassa, registrata nel petto non nella gola — comunica autorità senza aggressività. È il "livello B1" della voce: calmo, misurato, con una leggera risonanza. Evitare: voce che sale di tono alla fine delle frasi (rende le affermazioni suonare come domande), voce che si alza quando si è in disaccordo (comunica difensività).</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">3. Il Volume</div>
+          <div class="key-concept-body">Abbassare il volume nei momenti chiave è più potente che alzarlo. Quando vuoi che qualcosa venga ricordato, abbassa leggermente il volume e rallenta. Il cervello dell'interlocutore aumenta automaticamente la sua attenzione per compensare la riduzione del segnale. Alzare il volume è istintivo. Abbassarlo è tecnica.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">4. Il Silenzio</div>
+          <div class="key-concept-body">Il silenzio è lo strumento più potente e meno usato della comunicazione professionale. Una pausa di 2–3 secondi dopo un'affermazione importante: dà tempo all'interlocutore di elaborare, comunica che sei a tuo agio con l'attesa, e impedisce all'altro di sovrascrivere il tuo messaggio con una risposta immediata. La pausa strategica non è imbarazzo — è controllo.</div>
+        </div>
+        <div class="script-callout">
+          <strong>ESERCIZIO VOCALE — La Frase con 3 Pause</strong>
+          Prendi l'affermazione più importante che devi fare nella tua prossima conversazione professionale. Praticala con 3 pause: una prima dell'affermazione chiave (per creare anticipazione), una dopo (per lasciare che atterri), una prima della conclusione (per marcare il cambio di tema). Registra, ascolta, ripeti fino a quando le pause non suonano naturali.
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Coerenza Voce-Contenuto (min 35–45)</div>
+        <div class="script-text">La modulazione vocale non è separata dalla narrativa — la serve.
+
+Quando usi il framework delle 4 fasi, il tono vocale deve cambiare con la fase:
+Stato Iniziale: tono descrittivo, ritmo moderato.
+Incidente Scatenante: leggero aumento del ritmo, tono leggermente più urgente.
+Abisso: voce più bassa, ritmo rallentato — il peso del momento deve essere percepito fisicamente.
+Risoluzione: tono fermo e sicuro, ritmo regolare. La voce di chi ha trovato la soluzione.</div>
+      </div>
+    `)}
+    ${lessonCard('lesson-4-3','L4.3','Gestione dell\'Obiezione','Come usare lo storytelling per assorbire, riformulare e ribaltare qualsiasi obiezione senza conflitto aperto.',['obiezione','negoziazione','ribaltamento','narrativa difensiva'],'55 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–5)</div>
+        <div class="script-text">Un'obiezione non è un attacco. È un'informazione sul sistema operativo del tuo interlocutore.
+
+Quando qualcuno dice "il vostro prezzo è troppo alto", non sta descrivendo il prezzo. Sta dicendo che non vede ancora sufficiente valore per giustificare quel prezzo nel contesto della sua situazione specifica.
+
+La risposta istintiva è difensiva: giustificare il prezzo, abbassarlo, o contrattaccare. La risposta narrativa è completamente diversa: assorbire, riformulare il frame, e usare la storia per rispondere all'obiezione reale (il valore non percepito) non a quella dichiarata (il prezzo).</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Il Framework di Gestione dell\'Obiezione (min 5–35)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Step 1 — Assorbire</div>
+          <div class="key-concept-body">Non rispondere immediatamente. Pausa di 2 secondi. Poi: "Capisco la preoccupazione" o "È una domanda che molti mi pongono". Stai segnalando che hai sentito, che non sei minacciato, e che hai già un frame per quella preoccupazione. Non stai concordando — stai validando l'interlocutore prima di rispondere.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Step 2 — Riformulare</div>
+          <div class="key-concept-body">Traduci l'obiezione dichiarata nella sua versione reale. "Se capisco bene, la tua preoccupazione non è tanto il prezzo quanto la certezza che l'investimento produca il risultato atteso. È corretto?" Stai spostando il frame dalla transazione alla relazione. Se il tuo interlocutore conferma, hai già cambiato le coordinate della conversazione.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Step 3 — Rispondere con la Storia</div>
+          <div class="key-concept-body">Non con argomenti logici — con un caso studio. "Posso dirti cosa è successo in un contesto simile al tuo..." E usi il framework 4 fasi per raccontare una situazione analoga con risultato documentato. La storia risponde all'obiezione reale (certezza del risultato) senza mai affrontare direttamente quella dichiarata (il prezzo).</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Step 4 — Restituire la Decisione</div>
+          <div class="key-concept-body">Non chiudere tu. "Dato quello che ti ho raccontato, come valuti la situazione?" Hai risposto all'obiezione con una storia. Hai creato un contesto. Ora lasci che l'interlocutore arrivi alla conclusione autonomamente — che è sempre più potente di una conclusione imposta.</div>
+        </div>
+        <div class="script-callout">
+          <strong>LA TECNICA DEL POLIZIOTTO BUONO/CATTIVO NARRATIVA</strong>
+          In negoziazioni complesse, puoi usare una variante: il "cattivo" nella tua narrativa è la situazione di mercato, il vincolo regolatorio, il precedente del settore — non tu. "Non è che io non possa fare uno sconto — è che il mercato ha stabilito che questo tipo di intervento vale X perché..." Trasferisci la resistenza da te a un elemento esterno neutro. Tu sei l'alleato dell'interlocutore contro il vincolo, non il suo avversario.
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Playbook delle Obiezioni Comuni (min 35–48)</div>
+        <div class="script-text"><strong>"Il prezzo è troppo alto"</strong> → Riformula su valore/rischio. Usa contrasto con costo dell'inazione. Porta caso studio con ROI documentato.
+
+<strong>"Non è il momento giusto"</strong> → Chiedi cosa cambierebbe per renderlo il momento giusto. Usa la storia di qualcuno che ha aspettato e ha pagato il costo dell'attesa.
+
+<strong>"Dobbiamo valutare altri fornitori"</strong> → Validalo. Poi chiedi quali criteri useranno per valutare. Poi mostra come il tuo approccio si posiziona su quei criteri specifici.
+
+<strong>"Ci serve approvazione interna"</strong> → Offri di supportare il processo di approvazione. Chiedi chi sono i decision maker e quali sono le loro preoccupazioni specifiche. Diventa il consulente del processo, non solo l'offerente.
+
+<strong>"L'abbiamo già provato e non ha funzionato"</strong> → Questa è la più preziosa. Chiedi cosa è successo esattamente. Le risposte ti daranno le informazioni per differenziare il tuo approccio e dimostrare perché questa volta è diverso.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura — Recap Modulo 4 (min 48–55)</div>
+        <div class="script-text">Hai ora l'arsenale completo: la storia, la struttura, la scrittura, la presenza. 
+
+Nel Modulo 5 vediamo come trasformare tutto questo in capitale: come pacchettizzare il tuo metodo, costruire la tua offerta premium, e generare domanda inbound attraverso la narrativa.</div>
+      </div>
+    `)}
+  </div>
+  <div class="section">
+    ${sectionHdr('esercizi pratici','3')}
+    <div class="ex-grid">
+      ${exCard('🎥','Audit Video Completo','Analisi presenza digitale',
+        'Registra 5 minuti su un argomento tecnico del tuo dominio. Guarda 2 volte: una senza audio (solo prossemica) e una senza video (solo voce).',
+        [{label:'Cosa ho osservato guardando senza audio',ph:'Postura, movimenti, inquadratura, sfondo, illuminazione...',rows:3},{label:'Cosa ho osservato ascoltando senza video',ph:'Ritmo, tono, pause, volume, chiarezza...',rows:3},{label:'I 3 "leakage" di autorità che ho identificato',ph:'Le 3 cose che comunico involontariamente e che voglio cambiare...',rows:3},{label:'Il mio piano di miglioramento specifico',ph:'Cosa cambio, come lo pratico, come lo verifico...',rows:2}],
+        'Checklist personalizzata 12 punti + video 2.0 registrato dopo le modifiche'
+      )}
+      ${exCard('🎙️','La Pausa Strategica','Esercizio vocale',
+        'Scegli la tua prossima presentazione o riunione importante. Prepara 3 momenti di pausa strategica e praticali con registrazione audio.',
+        [{label:'L\'affermazione più importante che devo comunicare',ph:'La frase che deve atterrare e rimanere...',rows:2},{label:'Dove inserisco le 3 pause e perché',ph:'Pausa 1: prima di... Pausa 2: dopo... Pausa 3: prima di...',rows:3},{label:'Come cambia il ritmo nelle 4 fasi della storia',ph:'Stato iniziale: ritmo X. Incidente: ritmo Y. Abisso: ritmo Z. Risoluzione...',rows:2}],
+        'Audio annotato + rubrica vocale personalizzata + 1 registrazione pratica per fase'
+      )}
+      ${exCard('🥊','Playbook Obiezioni','Template difensivo',
+        'Identifica le 5 obiezioni più frequenti nel tuo contesto. Per ognuna scrivi la risposta istintiva attuale vs. la risposta narrativa ribaltata.',
+        [{label:'Obiezione 1 — Dichiarata',ph:'Cosa dice il cliente/manager...',rows:1},{label:'Obiezione 1 — Reale (riformulata)',ph:'Cosa vuole davvero dire / la paura sottostante...',rows:2},{label:'Risposta narrativa (con caso studio)',ph:'Assorbimento + riformulazione + storia analogica...',rows:4},{label:'La domanda di restituzione',ph:'Come restituisce la decisione all\'interlocutore...',rows:1}],
+        'Playbook 5 obiezioni completato + simulazione registrata con partner'
+      )}
+    </div>
+  </div>
+  <div class="section">
+    ${sectionHdr('scheda autovalutazione')}
+    ${evalSection('m4',[
+      {c:'Il mio ambiente video comunica professionalità prima che io parli',n:'Test: fai vedere lo screenshot del tuo setup a qualcuno che non ti conosce'},
+      {c:'Il mio ritmo vocale è sotto i 150 wpm nelle comunicazioni importanti',n:'Registra e misura — non stimare'},
+      {c:'Uso il silenzio come strumento consapevole, non come imbarazzo da riempire',n:'Almeno 3 pause strategiche per intervento importante'},
+      {c:'Assorbo l\'obiezione prima di rispondere — sempre',n:'Zero risposte difensive immediate. Sempre pausa + validazione prima'},
+      {c:'Riformulo l\'obiezione dichiarata nella sua versione reale prima di rispondere',n:'L\'obiezione dichiarata è raramente quella vera'},
+      {c:'La mia voce cambia registro coerentemente con le 4 fasi narrative',n:'Abisso = voce bassa e lenta. Risoluzione = tono fermo e sicuro'}
+    ])}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ─── MODULE 5 ───────────────────────────────────────────────────────
+function renderM5(){
+  return `<div class="hero anim" style="--hero-accent:var(--green);--hero-glow:var(--green-dim)">
+    <div class="hero-eyebrow" style="color:var(--green);border-color:var(--green-dim)">Modulo 05 · La Monetizzazione · 3 Lezioni · 3h</div>
+    <div class="hero-h1">Il <em>Salto</em> Quantico</div>
+    <div class="hero-sub">Trasformare l'attenzione in capitale. Pacchettizzare il metodo, costruire l'offerta premium, generare domanda inbound attraverso la narrativa. Dal professionista che vende tempo al creatore che vende risultati.</div>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--green)"></div>Prerequisiti: Moduli 01–04</div>
+      <div class="hero-meta-item"><div class="hero-meta-dot" style="background:var(--text3)"></div>Livello: Master</div>
+    </div>
+  </div>
+  <div class="section" style="--lesson-accent:var(--green)">
+    ${sectionHdr('lezioni — script completi','3')}
+    ${lessonCard('lesson-5-1','L5.1','Pacchettizzare l\'Esperienza','Come trasformare una case history personale in un metodo replicabile e vendibile.',['packaging','metodo','offerta','productize'],'60 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–6)</div>
+        <div class="script-text">C'è una differenza fondamentale tra vendere la tua presenza e vendere il tuo metodo.
+
+Chi vende la propria presenza vende il proprio tempo. È scalabile solo moltiplicando le ore. Ha un tetto biologico.
+
+Chi vende il proprio metodo vende un sistema che produce risultati — e può farlo attraverso corsi, consulenza scalata, licensing, SaaS, e altre strutture che non dipendono dalla sua presenza fisica.
+
+Il passaggio da presenza a metodo è il salto quantico di questo modulo. E comincia con una domanda semplice: cosa fai sistematicamente — anche quando non sei convinto di seguire un processo — che produce risultati che altri non riescono a replicare?</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Il Processo di Pacchettizzazione (min 6–40)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Step 1 — Estrarre il Metodo dall\'Intuizione</div>
+          <div class="key-concept-body">La maggior parte dei professionisti senior ha un metodo implicito — una sequenza di azioni e decisioni che seguono automaticamente e che produce risultati superiori. Il problema è che è implicito: non lo hanno mai esplicitato, non sanno insegnarlo, non possono venderlo come framework.<br><br>Il processo di estrazione: prendi i tuoi 5 migliori risultati. Descrivi passo per passo cosa hai fatto. Cerca i pattern ricorrenti — le decisioni che hai preso in tutti e 5 i casi, la sequenza che si ripete, il principio che governa le variazioni.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Step 2 — Nominare il Metodo</div>
+          <div class="key-concept-body">Un metodo senza nome è un'intuizione. Un metodo con nome è un prodotto.<br><br>Il nome deve essere: memorabile, descrittivo del beneficio (non del processo), abbastanza specifico da essere credibile, abbastanza generale da essere applicabile a più contesti.<br><br>Esempi: "Metodo SHIFT" (per un coach di change management), "Framework 4D" (per un consultant di architettura), "Il Processo CLARO" (per un esperto di compliance). L'acronimo aiuta la memorabilità ma non è obbligatorio.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Step 3 — Definire le 3 Fasi</div>
+          <div class="key-concept-body">I metodi vendibili hanno 3 fasi. Non 7, non 12. Tre. È il numero cognitivamente ottimale: abbastanza per comunicare complessità, abbastanza semplice per essere ricordato.<br><br>Ogni fase ha: un nome, un'azione primaria, un output misurabile. Struttura: Fase 1 = Assessment/Diagnosi (cosa c'è), Fase 2 = Intervento (cosa si fa), Fase 3 = Consolidamento (come si mantiene).</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Step 4 — Definire Chi NON è il Tuo Cliente</div>
+          <div class="key-concept-body">Il posizionamento premium richiede esclusività. Definire chi non serve — e dirlo esplicitamente — è più potente che definire chi servi.<br><br>"Lavoro con aziende enterprise con fatturato superiore a €50M che stanno attraversando una transizione regolamentare e non hanno le risorse interne per gestirla." Questo esclude automaticamente il 95% del mercato — e rende l'offerta irresistibilmente precisa per il 5% rimanente.</div>
+        </div>
+        <div class="script-callout">
+          <strong>CASO PRATICO — Da freelancer a methodology owner</strong>
+          Un senior consultant in cybersecurity passava da un cliente all'altro, fatturando a giornata. Nel costruire il suo Dossier (Modulo 3), ha identificato che in tutti i suoi engagement di successo seguiva la stessa sequenza: 1) mappatura del gap tra compliance dichiarata e reale, 2) prioritizzazione del rischio per ROI del remediation, 3) costruzione del reporting narrativo per il board. Ha chiamato questo "SCAN Protocol". Oggi vende SCAN come assessment fisso a €18k con durata definita — non più a giornata. Il fatturato non è aumentato perché lavora di più. È aumentato perché ha smesso di vendere tempo e ha iniziato a vendere certezza di risultato.
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">I 3 Livelli dell\'Offerta (min 40–53)</div>
+        <div class="script-text">Un metodo pacchettizzato può essere monetizzato a tre livelli di prezzo e coinvolgimento:
+
+<strong>Livello 1 — Self-service (€297–€997):</strong> Corso online, workbook, template. Il cliente applica il metodo autonomamente. Massima scalabilità, minimo coinvolgimento del creatore. Ideale per entrare nel mercato e costruire audience.
+
+<strong>Livello 2 — Supported (€2k–€10k):</strong> Programma con componente live (workshop, coaching di gruppo, sessioni Q&A). Il cliente applica il metodo con supporto. Buon bilanciamento tra scalabilità e personalizzazione.
+
+<strong>Livello 3 — Done-with-you / Done-for-you (€15k–€100k+):</strong> Consulenza diretta in cui il professionista applica il metodo nel contesto specifico del cliente. Massimo prezzo, massimo coinvolgimento. Ideale per clienti enterprise che non possono o non vogliono fare da soli.
+
+La struttura a 3 livelli permette di servire clienti con budget diversi con lo stesso metodo, a diversi gradi di delega.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura (min 53–60)</div>
+        <div class="script-text">Nella prossima lezione costruiamo il sistema che porta il cliente ideale a te — senza che tu debba inseguirlo. Il funnel narrativo applicato alla generazione di lead qualificati.</div>
+      </div>
+    `)}
+    ${lessonCard('lesson-5-2','L5.2','Costruire l\'Impero SaaS/Consulting','Come usare la propria storia per generare domanda inbound qualificata e costruire sistemi di lead generation narrativi.',['saas','consulting','lead generation','funnel narrativo'],'60 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–6)</div>
+        <div class="script-text">La differenza tra il professionista che insegue i clienti e quello che viene cercato dai clienti non è il talento. È il sistema narrativo.
+
+Chi viene cercato ha costruito nel tempo un sistema in cui la sua narrativa lavora mentre lui non lavora. I suoi post LinkedIn attraggono i clienti giusti. Il suo Dossier circola nelle reti professionali. I suoi case study vengono condivisi da chi li ha letti.
+
+Questo sistema non si costruisce con la fortuna o con la quantità di output. Si costruisce con la qualità della narrativa e con la sua distribuzione strategica.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Il Funnel Narrativo (min 6–40)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Fase 1 — Awareness (Da Stranger a Lettore)</div>
+          <div class="key-concept-body"><strong>Obiettivo:</strong> Essere trovato da chi non ti conosce ma ha il tuo problema.<br><strong>Strumenti narrativi:</strong> Post LinkedIn con hook potenti, articoli su Medium/newsletter, interventi in podcast di settore, commenti strategici su post di leader del tuo settore.<br><strong>La storia qui:</strong> Il caso studio pubblico. Non "io sono bravo in X" — "ecco cosa è successo in un contesto come il tuo e come l'ho risolto". La storia è il magnete.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Fase 2 — Interest (Da Lettore a Follower)</div>
+          <div class="key-concept-body"><strong>Obiettivo:</strong> Mantenere l'attenzione nel tempo e costruire fiducia progressiva.<br><strong>Strumenti narrativi:</strong> Newsletter con contenuto esclusivo e profondo, serie di post tematici, webinar gratuiti sul tuo metodo.<br><strong>La storia qui:</strong> Il framework esplicitato. Condividi il tuo metodo — parzialmente. Abbastanza per dimostrare la profondità, non abbastanza per rendere superflua la consulenza.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Fase 3 — Decision (Da Follower a Lead)</div>
+          <div class="key-concept-body"><strong>Obiettivo:</strong> Convertire l'interesse in una conversazione commerciale.<br><strong>Strumenti narrativi:</strong> Il Dossier inviato proattivamente, la case study personalizzata per il settore del prospect, la call di discovery strutturata come audit narrativo del loro problema.<br><strong>La storia qui:</strong> La storia analoga. "Ho visto questa situazione in un'azienda simile alla tua. Ecco cosa è successo."</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Fase 4 — Conversion (Da Lead a Cliente)</div>
+          <div class="key-concept-body"><strong>Obiettivo:</strong> Chiudere l'offerta al prezzo giusto senza negoziare al ribasso.<br><strong>Strumenti narrativi:</strong> La proposta come documento narrativo (non come preventivo), la gestione delle obiezioni con il framework del Modulo 4, la Scadenza Passiva applicata all'offerta.<br><strong>La storia qui:</strong> La storia di trasformazione. "Chi era il cliente prima. Chi è dopo. Cosa è cambiato. Cosa può cambiare per te."</div>
+        </div>
+        <div class="script-callout">
+          <strong>IL SISTEMA CHE LAVORA QUANDO TU NON LAVORI</strong>
+          L'obiettivo finale del funnel narrativo è che ogni pezzo di contenuto che produci continui ad attrarre lead qualificati anche mesi o anni dopo la sua pubblicazione. Un caso studio ben scritto su LinkedIn, un articolo su Medium, una puntata di podcast — ogni asset narrativo è un venditore che non dorme mai. La qualità del singolo pezzo conta più della quantità della produzione.
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Content Strategy per Professionisti IT Senior (min 40–53)</div>
+        <div class="script-text"><strong>Il mix narrativo settimanale:</strong>
+
+2× post LinkedIn: 1 caso studio (con dettagli letali) + 1 principio generalizzabile (estratto dal tuo metodo)
+1× newsletter mensile profonda: 800–1200 parole su un tema specifico del tuo mercato
+1× aggiornamento del Dossier: aggiungi il caso studio più rilevante del mese
+
+<strong>I canali prioritari per il professionista IT B2B:</strong>
+LinkedIn è il primary channel — audience decision maker, algoritmo favorevole al contenuto professionale profondo, SEO integrata.
+Newsletter è il retention tool — chi si iscrive è già interessato, l'email bypassa l'algoritmo.
+Podcast (come ospite) è il trust accelerator — 45 minuti di ascolto costruisce più fiducia di 50 post.
+
+<strong>La regola dell'80/20 del contenuto:</strong>
+80% del contenuto serve il lettore — risolve un problema reale, condivide un'insight applicabile, racconta una storia da cui si impara.
+20% del contenuto posiziona te — spiega come lavori, mostra i risultati, presenta l'offerta.
+Chi inverte la proporzione perde audience. Chi mantiene l'80/20 costruisce fiducia e converte.</div>
+      </div>
+    `)}
+    ${lessonCard('lesson-5-3','L5.3','Il Posizionamento Premium','Come costruire un posizionamento che giustifica prezzi 5–10x superiori alla media del mercato.',['pricing','premium','posizionamento','valore'],'60 min',`
+      <div class="script-section">
+        <div class="script-label">Apertura (min 0–6)</div>
+        <div class="script-text">Perché due professionisti con competenze simili possono avere tariffe che differiscono di un fattore 10?
+
+Non è esperienza. Non è network. Non è nemmeno qualità del lavoro — almeno non direttamente.
+
+È posizionamento narrativo.
+
+Chi fattura 10× più della media del suo settore ha costruito nel tempo una narrativa in cui è l'unica risposta credibile a un problema specifico. Non uno dei tanti — l'unico che ha già risolto esattamente questo tipo di problema, in questo tipo di contesto, per questo tipo di cliente.
+
+Questo è il posizionamento premium: non essere il migliore in senso generale, ma essere l'unica scelta ovvia in un contesto specifico.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">I 4 Pilastri del Posizionamento Premium (min 6–40)</div>
+        <div class="key-concept">
+          <div class="key-concept-title">Pilastro 1 — La Specializzazione Verticale</div>
+          <div class="key-concept-body">Il generalista compete sul prezzo. Lo specialista verticale compete sulla scarsità.<br><br>La specializzazione verticale non significa sapere solo una cosa. Significa essere conosciuto come la referenza principale per un'intersezione specifica di industria + problema + audience.<br><br>Esempi: "compliance DORA per fintech europei sotto sorveglianza EBA" è un posizionamento verticale. "cybersecurity" non lo è. "Data architecture per scale-up SaaS B2B in fase Series B" è verticale. "cloud infrastructure" non lo è.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Pilastro 2 — La Prova Sociale Narrativa</div>
+          <div class="key-concept-body">Non testimonianze generiche. Case study specifici con numeri reali e clienti riconoscibili (con permesso). La prova sociale narrativa è la dimostrazione che il metodo funziona in contesti reali, non solo in teoria.<br><br>La regola: una case study di alta qualità — specifica, quantificata, con cliente verificabile — vale 100 testimonianze generiche. Costruisci 3 case study potenti invece di raccogliere 50 stelline.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Pilastro 3 — Il Pricing come Segnale Narrativo</div>
+          <div class="key-concept-body">Il prezzo non è solo un numero. È un segnale narrativo: dice al mercato chi sei e a chi ti rivolgi.<br><br>Un prezzo troppo basso comunica: "non sono sicuro del mio valore" o "mi rivolgo a clienti con budget limitati". Entrambi scoraggiano il cliente premium.<br><br>Un prezzo premium, abbinato a una narrativa di posizionamento solida, seleziona naturalmente i clienti giusti — quelli che comprendono il valore e possono permetterselo. Filtrare i clienti sbagliati è una funzione del pricing, non un problema.<br><br>La regola pratica: se non ricevi nessun "è troppo caro", il tuo prezzo è probabilmente troppo basso.</div>
+        </div>
+        <div class="key-concept">
+          <div class="key-concept-title">Pilastro 4 — La Scarsità Costruita</div>
+          <div class="key-concept-body">Il premium richiede scarsità percepita — reale o costruita narrativamente. Tecniche: numero limitato di clienti per trimestre, processo di selezione dei clienti (non tutti vengono accettati), lista d'attesa esplicita, specializzazione così stretta da escludere automaticamente la maggior parte del mercato.<br><br>La scarsità narrativa più potente: avere una lista di clienti con cui non lavori. "Scelgo con chi lavorare" comunica posizionamento premium meglio di qualsiasi claim di eccellenza.</div>
+        </div>
+        <div class="script-callout">
+          <strong>ESERCIZIO FINALE DEL CORSO — Il Pricing Audit</strong>
+          Prendi la tua tariffa attuale. Calcola il valore medio che stai consegnando ai tuoi clienti (risultati economici, rischi evitati, tempo risparmiato). Dividi il tuo compenso per il valore consegnato. Se il ratio è inferiore al 10% — stai lasciando il 90% del valore sul tavolo. La domanda non è "posso permettermi di aumentare il prezzo?" La domanda è "posso permettermi di non farlo?"
+        </div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">La Proposta come Documento Narrativo (min 40–53)</div>
+        <div class="script-text">La proposta commerciale tradizionale è un documento transazionale: servizi offerti, timeline, prezzo. È il documento che ottimizza per essere accettato o rifiutato nel più breve tempo possibile.
+
+La proposta narrativa è un documento che racconta una storia: dove si trova il cliente ora, dove potrebbe essere dopo il tuo intervento, come ci si arriva, e perché tu sei la scelta giusta per questo percorso specifico.
+
+<strong>Struttura della proposta narrativa:</strong>
+
+1. Il Rispecchiamento: mostra che hai capito la situazione del cliente meglio di quanto lui stesso l'abbia articolata. Usa i dati e i dettagli che hai raccolto nella call di discovery.
+
+2. La Diagnosi: identifica il problema radicale (non il sintomo che il cliente ha descritto). Questa sezione dimostra competenza senza aver ancora venduto nulla.
+
+3. Il Percorso: le 3 fasi del tuo metodo applicate al loro contesto specifico. Con milestone e output misurabili.
+
+4. Il Prima/Dopo: il contrasto tra lo stato attuale e lo stato target. Con numeri dove possibile.
+
+5. L'Investimento: il prezzo nel contesto del valore. Non "il costo del servizio è X" ma "l'investimento per raggiungere [outcome] è X, con un ROI atteso di Y entro Z mesi".
+
+6. I Prossimi Passi: espliciti e con una Scadenza Passiva implicita.</div>
+      </div>
+      <div class="script-section">
+        <div class="script-label">Chiusura del Corso (min 53–60)</div>
+        <div class="script-text">Hai completato l'Ingegneria della Narrativa.
+
+Non sei più lo stesso professionista che ha iniziato il Modulo 1.
+
+Sai che il valore oggettivo non esiste come leva economica — esiste solo il valore percepito, e la percezione si gestisce con la narrativa.
+
+Sai strutturare qualsiasi storia con il framework delle 4 fasi, amplificarla con il contrasto, e renderla inattaccabile con il dettaglio letale.
+
+Sai scrivere email che creano contesti favorevoli, costruire il tuo posizionamento su LinkedIn, e proteggere la tua narrativa con il Dossier.
+
+Sai dominare la presenza fisica e digitale, usare il silenzio come strumento di autorità, e gestire le obiezioni con lo storytelling invece che con la logica.
+
+Sai pacchettizzare il tuo metodo, costruire un funnel narrativo, e posizionarti in modo da essere l'unica scelta ovvia per il tuo cliente ideale.
+
+Quello che fai con questo non dipende dal corso. Dipende da te.
+
+La narrativa più potente che puoi costruire è quella della persona che ha deciso di smettere di essere un esecutore e ha scelto di diventare un autore.
+
+Inizia a scriverla oggi.</div>
+      </div>
+    `)}
+  </div>
+  <div class="section">
+    ${sectionHdr('esercizi pratici','3')}
+    <div class="ex-grid">
+      ${exCard('📦','Disegna il Tuo Metodo','Offer design',
+        'Estrai e formalizza il metodo implicito che usi già. Dagli un nome, definisci le 3 fasi, costruisci i 3 livelli di offerta.',
+        [{label:'I tuoi 3 risultati migliori degli ultimi 2 anni',ph:'Descrizione essenziale di ogni situazione...',rows:3},{label:'I pattern ricorrenti — cosa hai fatto in tutti e 3 i casi',ph:'La sequenza, le decisioni, il principio che si ripete...',rows:3},{label:'Il nome del metodo e le 3 fasi',ph:'Nome: ... Fase 1: ... Fase 2: ... Fase 3: ...',rows:3},{label:'Chi NON è il tuo cliente (definizione precisa)',ph:'Dimensione azienda, settore, fase, problema che NON gestisci...',rows:2}],
+        'Offer stack 1-pager con metodo nominato + 3 livelli di prezzo ipotetico'
+      )}
+      ${exCard('🌐','Funnel Narrativo','Customer journey',
+        'Mappa il viaggio del tuo cliente ideale dal primo contatto alla firma. Identifica la storia narrativa di ogni touchpoint.',
+        [{label:'Il profilo del cliente ideale (specifico)',ph:'Ruolo, settore, problema specifico, budget, trigger di acquisto...',rows:2},{label:'Come mi trova oggi (Awareness)',ph:'Quale contenuto, quale canale, quale storia lo attrae...',rows:2},{label:'Come costruisco fiducia nel tempo (Interest)',ph:'Newsletter, webinar, serie di post, che tipo di contenuto...',rows:2},{label:'Come converto l\'interesse in conversazione (Decision)',ph:'Il trigger, il contenuto, l\'azione che genera la call...',rows:2}],
+        'Customer journey narrativo completo + piano dei contenuti 90 giorni'
+      )}
+      ${exCard('💰','Pricing & Proposta','Audit e riscrittura',
+        'Analizza il tuo pricing attuale vs il valore che consegni. Riscrivi la tua proposta tipo in formato narrativo.',
+        [{label:'Il mio pricing attuale (tariffa giornaliera o progetto)',ph:'Prezzo attuale, struttura, termini...',rows:1},{label:'Il valore medio che consegno a un cliente (stima)',ph:'Risultati economici, rischi evitati, tempo risparmiato in €...',rows:2},{label:'Il ratio compenso/valore — e cosa mi dice',ph:'Se consegno €100k di valore e faturo €10k, sto al 10%...',rows:2},{label:'La prima riga della mia proposta narrativa riscritta',ph:'"Basandomi su quanto emerso nella nostra conversazione, [azienda] si trova in una situazione in cui..."',rows:3}],
+        'Pricing matrix + proposta narrativa v1.0 + script di presentazione dell\'offerta'
+      )}
+    </div>
+  </div>
+  <div class="section">
+    ${sectionHdr('scheda autovalutazione')}
+    ${evalSection('m5',[
+      {c:'Il mio metodo ha un nome e può essere descritto in 2 frasi',n:'Se non ha nome, non è ancora un metodo. È ancora un\'intuizione.'},
+      {c:'Ho definito le 3 fasi del mio metodo con output misurabili per ognuna',n:'Ogni fase deve avere un deliverable concreto, non solo un\'attività'},
+      {c:'Ho definito chi NON è il mio cliente con la stessa precisione con cui definisco chi lo è',n:'L\'esclusione è la base del posizionamento premium'},
+      {c:'Il mio pricing riflette il valore che consegno, non il tempo che impiego',n:'Ratio compenso/valore superiore al 10% è il minimo'},
+      {c:'Ho almeno 1 caso studio completo con numeri reali che posso usare nel funnel',n:'1 caso studio di qualità vale più di 100 testimonianze generiche'},
+      {c:'La mia proposta commerciale racconta una storia, non lista servizi e prezzi',n:'Il decisore deve sentire che hai capito il suo problema prima di vedere il prezzo'}
+    ])}
+  </div>
+  <div style="padding:0 32px 32px">
+    <div style="background:var(--gold-bg);border:1px solid var(--gold-dim);border-radius:14px;padding:28px;text-align:center;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold2),transparent)"></div>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px">Corso Completato</div>
+      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--text);margin-bottom:10px">Sei un Ingegnere della Narrativa</div>
+      <div style="font-size:13px;color:var(--text2);max-width:500px;margin:0 auto;line-height:1.65">La narrativa più potente che puoi costruire è quella della persona che ha deciso di smettere di essere un esecutore e ha scelto di diventare un autore. Inizia a scriverla oggi.</div>
+    </div>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+showPage('overview', document.querySelector('.nav-item'));
+</script>
+</body>
+</html>

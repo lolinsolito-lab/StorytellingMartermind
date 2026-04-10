@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<!--
+  ============================================================
+  INGEGNERIA DELLA NARRATIVA — ADMIN DASHBOARD
+  ============================================================
+
+  STACK DI PRODUZIONE (da collegare):
+  ┌─────────────────────────────────────────────────────────┐
+  │  Frontend    → Next.js 14 (App Router) su Vercel        │
+  │  Database    → Supabase (Postgres + Auth + Storage)     │
+  │  Pagamenti   → Stripe (Products, Webhooks, Coupons)     │
+  │  Email       → Resend (transazionali + sequenze)        │
+  │  Dominio     → ingegneriadellanarrtiva.com (su Vercel)  │
+  │  Video       → Mux (streaming lezioni)                  │
+  │  Analytics   → Plausible (privacy-first)                │
+  └─────────────────────────────────────────────────────────┘
+
+  STRUTTURA SUPABASE — TABELLE PRINCIPALI:
+  ┌──────────────────┬────────────────────────────────────┐
+  │ users            │ id, email, name, plan, created_at  │
+  │ purchases        │ id, user_id, plan, amount, stripe_ │
+  │                  │ payment_id, created_at             │
+  │ progress         │ id, user_id, lesson_id, completed  │
+  │                  │ _at, exercise_submitted            │
+  │ lessons          │ id, module_id, title, mux_asset_id │
+  │                  │ duration, order_index              │
+  │ modules          │ id, title, order_index, locked     │
+  │ discounts        │ id, code, stripe_coupon_id,        │
+  │                  │ percent_off, expires_at, uses      │
+  │ leads            │ id, email, source, status,         │
+  │                  │ created_at                         │
+  └──────────────────┴────────────────────────────────────┘
+
+  STRIPE PRODUCTS (3 tier):
+  - prod_autonomo    → price: €497 one-time
+  - prod_accelerato  → price: €1497 one-time
+  - prod_intensivo   → price: €4500 one-time
+  Webhook: /api/stripe/webhook → aggiorna users + invia email Resend
+
+  RESEND SEQUENZE EMAIL:
+  - welcome          → day 0 dopo acquisto
+  - orientation      → day 1
+  - first_exercise   → day 3
+  - checkin          → day 7
+  - push_final       → day 14
+
+  VERCEL ENV VARS DA CONFIGURARE:
+  NEXT_PUBLIC_SUPABASE_URL
+  NEXT_PUBLIC_SUPABASE_ANON_KEY
+  SUPABASE_SERVICE_ROLE_KEY
+  STRIPE_SECRET_KEY
+  STRIPE_WEBHOOK_SECRET
+  RESEND_API_KEY
+  MUX_TOKEN_ID
+  MUX_TOKEN_SECRET
+
+  ROUTE STRUCTURE (Next.js App Router):
+  /                     → sales page
+  /login                → auth page
+  /dashboard            → student dashboard (protected)
+  /dashboard/modules    → LMS view
+  /dashboard/exercises  → exercises
+  /dashboard/sessions   → live sessions
+  /admin                → THIS FILE (admin only)
+  /admin/finance        → revenue, MRR, payouts
+  /admin/lms            → students, progress
+  /admin/crm            → leads, pipeline
+  /admin/content        → modules, lessons, upload
+  /admin/discounts      → coupons, offers
+  /api/stripe/webhook   → Stripe events
+  /api/resend/send      → trigger email sequences
+  ============================================================
+-->
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin — Ingegneria della Narrativa</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+/* ============================================================
+   DESIGN SYSTEM — CSS VARIABLES
+   In produzione: importare da globals.css condiviso con
+   la student dashboard per coerenza visiva
+   ============================================================ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07070c;--s1:#0c0c14;--s2:#11111a;--s3:#161621;--s4:#1c1c2a;
+  --gold:#c9a84c;--gold2:#e2c96d;--gold-dim:rgba(201,168,76,.12);--gold-glow:rgba(201,168,76,.06);
+  --green:#4ade80;--green-dim:rgba(74,222,128,.1);
+  --blue:#60a5fa;--blue-dim:rgba(96,165,250,.1);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,.1);
+  --red:#f87171;--red-dim:rgba(248,113,113,.1);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,.1);
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,.1);
+  --coral:#fb923c;--coral-dim:rgba(251,146,60,.1);
+  --text:#eeeae0;--text2:#9a9690;--text3:#5a5752;--text4:#2e2c2a;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);--border3:rgba(255,255,255,.16);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ============================================================
+   SHELL LAYOUT
+   Sidebar fissa + main scrollabile
+   ============================================================ */
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:220px;min-width:220px;background:var(--s1);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sb-top{padding:16px;border-bottom:1px solid var(--border)}
+.sb-badge{
+  display:inline-block;padding:3px 8px;border-radius:3px;
+  font-family:'DM Mono',monospace;font-size:9px;color:var(--red);
+  background:var(--red-dim);border:1px solid rgba(248,113,113,.2);
+  letter-spacing:.08em;margin-bottom:8px;
+}
+.sb-logo{
+  font-family:'Cormorant Garamond',serif;
+  font-size:15px;font-weight:600;color:var(--gold);
+  letter-spacing:.04em;line-height:1.2;margin-bottom:10px;
+}
+.sb-admin-user{
+  display:flex;align-items:center;gap:8px;
+  padding:8px;background:var(--s2);border-radius:6px;
+  border:1px solid var(--border);
+}
+.sb-av{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--red-dim);border:1px solid rgba(248,113,113,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--red);flex-shrink:0;
+}
+.sb-uname{font-size:11px;font-weight:500;color:var(--text)}
+.sb-urole{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.04em}
+
+.sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-group{padding:10px 14px 3px;font-size:9px;color:var(--text4);letter-spacing:.14em;text-transform:uppercase;font-family:'DM Mono',monospace}
+.nav-item{
+  display:flex;align-items:center;gap:8px;padding:8px 14px;
+  cursor:pointer;transition:all .15s;border-left:2px solid transparent;
+}
+.nav-item:hover{background:var(--s2)}
+.nav-item.active{background:var(--s2);border-left-color:var(--gold)}
+.nav-item.active .ni-label{color:var(--text)}
+.ni-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0;opacity:.7}
+.ni-label{font-size:12px;color:var(--text2);flex:1}
+.ni-num{
+  font-family:'DM Mono',monospace;font-size:9px;
+  padding:2px 6px;border-radius:100px;
+}
+.ni-num.green{background:var(--green-dim);color:var(--green)}
+.ni-num.amber{background:var(--amber-dim);color:var(--amber)}
+.ni-num.blue{background:var(--blue-dim);color:var(--blue)}
+.ni-num.red{background:var(--red-dim);color:var(--red)}
+
+.sb-footer{padding:12px 14px;border-top:1px solid var(--border)}
+.sb-env{
+  background:var(--s2);border:1px solid var(--border);border-radius:6px;
+  padding:8px 10px;
+}
+.sb-env-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:.1em;margin-bottom:5px}
+.sb-env-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.sb-env-key{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3)}
+.sb-env-val{font-family:'DM Mono',monospace;font-size:9px;padding:1px 5px;border-radius:3px}
+.sb-env-val.ok{background:var(--green-dim);color:var(--green)}
+.sb-env-val.miss{background:var(--red-dim);color:var(--red)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{
+  height:46px;min-height:46px;
+  background:rgba(7,7,12,.92);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 22px;gap:10px;
+}
+.tb-bc{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.tb-sep{color:var(--text4)}
+.tb-cur{color:var(--text2)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.tb-btn{
+  padding:5px 12px;border-radius:6px;
+  font-size:11px;font-family:'DM Mono',monospace;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--text2);cursor:pointer;transition:all .15s;
+}
+.tb-btn:hover{background:var(--s3);color:var(--text);border-color:var(--border3)}
+.tb-btn.primary{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:500}
+.tb-btn.primary:hover{background:var(--gold2)}
+.tb-btn.danger{background:var(--red-dim);color:var(--red);border-color:rgba(248,113,113,.25)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(74,222,128,.4)}50%{opacity:.8;box-shadow:0 0 0 4px rgba(74,222,128,0)}}
+.live-text{font-family:'DM Mono',monospace;font-size:10px;color:var(--green)}
+
+/* CONTENT AREA */
+.content{flex:1;overflow-y:auto;padding:22px}
+
+/* VIEWS */
+.view{display:none;animation:fadeIn .25s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── COMPONENT LIBRARY ── */
+
+/* Section header */
+.sec-hdr{display:flex;align-items:center;gap:10px;margin:22px 0 14px}
+.sec-hdr:first-child{margin-top:0}
+.sec-line{flex:1;height:1px;background:var(--border)}
+.sec-label{font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.sec-action{font-size:10px;font-family:'DM Mono',monospace;color:var(--blue);cursor:pointer;white-space:nowrap}
+.sec-action:hover{color:var(--text)}
+
+/* KPI Grid */
+.kpi-grid{display:grid;gap:8px;margin-bottom:16px}
+.kpi-grid.c4{grid-template-columns:repeat(4,1fr)}
+.kpi-grid.c3{grid-template-columns:repeat(3,1fr)}
+.kpi-grid.c5{grid-template-columns:repeat(5,1fr)}
+.kpi{
+  background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:16px;position:relative;overflow:hidden;transition:border-color .2s;
+}
+.kpi:hover{border-color:var(--border2)}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kc,var(--gold));opacity:.5}
+.kpi-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.kpi-val{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:400;color:var(--text);line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.kpi-delta{
+  display:inline-block;padding:1px 6px;border-radius:3px;
+  font-family:'DM Mono',monospace;font-size:9px;
+}
+.kpi-delta.up{background:var(--green-dim);color:var(--green)}
+.kpi-delta.down{background:var(--red-dim);color:var(--red)}
+.kpi-delta.flat{background:var(--border);color:var(--text3)}
+
+/* Table */
+.table-wrap{background:var(--s2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.table-title{font-size:13px;font-weight:500;color:var(--text)}
+.table-sub{font-size:11px;color:var(--text3)}
+.table-actions{display:flex;gap:6px}
+table.data{width:100%;border-collapse:collapse}
+table.data th{
+  text-align:left;padding:9px 14px;
+  font-family:'DM Mono',monospace;font-size:9px;
+  color:var(--text3);letter-spacing:.12em;text-transform:uppercase;
+  border-bottom:1px solid var(--border);font-weight:400;white-space:nowrap;
+}
+table.data td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.data tr:last-child td{border-bottom:none}
+table.data tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
+.cell-main{font-size:13px;color:var(--text)}
+.cell-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.cell-mono{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;font-family:'DM Mono',monospace;font-size:9px;white-space:nowrap}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.badge.green{background:var(--green-dim);color:var(--green)}
+.badge.blue{background:var(--blue-dim);color:var(--blue)}
+.badge.amber{background:var(--amber-dim);color:var(--amber)}
+.badge.red{background:var(--red-dim);color:var(--red)}
+.badge.gray{background:var(--border);color:var(--text3)}
+.badge.gold{background:var(--gold-dim);color:var(--gold)}
+.badge.purple{background:var(--purple-dim);color:var(--purple)}
+
+/* Plan badge */
+.plan{padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.06em}
+.plan.autonomo{background:var(--border);color:var(--text3)}
+.plan.accelerato{background:var(--gold-dim);color:var(--gold)}
+.plan.intensivo{background:var(--purple-dim);color:var(--purple)}
+
+/* Progress mini */
+.prog-mini{display:flex;align-items:center;gap:6px}
+.prog-mini-track{flex:1;height:4px;background:var(--border2);border-radius:2px;overflow:hidden}
+.prog-mini-fill{height:100%;border-radius:2px;background:var(--green);transition:width .6s}
+.prog-mini-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);min-width:28px;text-align:right}
+
+/* Chart bar */
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:80px;padding:4px 0}
+.bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;transition:height .6s ease;cursor:pointer;position:relative}
+.bar:hover{opacity:.8}
+.bar-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--text3);text-align:center;margin-top:3px}
+
+/* Sparkline */
+.spark{display:flex;align-items:flex-end;gap:2px;height:32px}
+.spark-bar{width:4px;border-radius:1px;min-height:3px}
+
+/* Search + filter bar */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.search-input{
+  flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:6px;
+  padding:8px 12px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;
+  outline:none;transition:border-color .15s;
+}
+.search-input:focus{border-color:var(--border3)}
+.search-input::placeholder{color:var(--text4)}
+.filter-select{
+  background:var(--s2);border:1px solid var(--border2);border-radius:6px;
+  padding:7px 10px;font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;
+  outline:none;cursor:pointer;
+}
+
+/* Discount card */
+.discount-card{
+  background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:16px;display:flex;align-items:center;gap:14px;
+  transition:border-color .2s;
+}
+.discount-card:hover{border-color:var(--border2)}
+.dc-code{
+  font-family:'DM Mono',monospace;font-size:16px;font-weight:500;
+  color:var(--gold);letter-spacing:.08em;background:var(--gold-dim);
+  padding:8px 14px;border-radius:6px;min-width:140px;text-align:center;
+  border:1px solid rgba(201,168,76,.2);
+}
+.dc-info{flex:1}
+.dc-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+.dc-meta{font-size:11px;color:var(--text3);display:flex;gap:12px}
+.dc-meta span{display:flex;align-items:center;gap:3px}
+.dc-actions{display:flex;gap:6px}
+
+/* Content card */
+.content-card{
+  background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;
+  cursor:grab;transition:all .2s;
+}
+.content-card:hover{border-color:var(--border2);background:var(--s3)}
+.cc-order{
+  font-family:'DM Mono',monospace;font-size:20px;color:var(--text4);
+  min-width:28px;text-align:center;cursor:grab;
+}
+.cc-icon{
+  width:36px;height:36px;border-radius:8px;
+  background:var(--s3);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+}
+.cc-info{flex:1}
+.cc-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.cc-meta{font-size:11px;color:var(--text3);display:flex;gap:10px}
+.cc-actions{display:flex;gap:5px}
+
+/* Modal overlay */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  backdrop-filter:blur(8px);z-index:100;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--s2);border:1px solid var(--border2);border-radius:14px;
+  padding:28px;width:480px;max-width:90vw;max-height:90vh;overflow-y:auto;
+  position:relative;
+}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  background:var(--s3);border:1px solid var(--border);border-radius:6px;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:14px;color:var(--text3);transition:all .15s;
+}
+.modal-close:hover{background:var(--s4);color:var(--text)}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text);margin-bottom:6px}
+.modal-sub{font-size:12px;color:var(--text3);margin-bottom:22px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;font-family:'DM Mono',monospace;letter-spacing:.04em}
+.form-input{
+  width:100%;background:var(--s3);border:1px solid var(--border2);border-radius:6px;
+  padding:9px 12px;font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;
+  outline:none;transition:border-color .15s;
+}
+.form-input:focus{border-color:var(--gold)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-hint{font-size:10px;color:var(--text3);margin-top:4px;font-family:'DM Mono',monospace}
+
+/* CRM funnel */
+.funnel-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.funnel-col{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px}
+.funnel-col-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.funnel-col-name{font-size:11px;font-weight:500;color:var(--text)}
+.funnel-col-count{font-family:'DM Mono',monospace;font-size:10px;padding:2px 6px;border-radius:100px}
+.crm-card{
+  background:var(--s3);border:1px solid var(--border);border-radius:7px;
+  padding:10px;margin-bottom:6px;cursor:pointer;transition:border-color .15s;
+}
+.crm-card:hover{border-color:var(--border2)}
+.crm-card:last-child{margin-bottom:0}
+.crm-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px}
+.crm-email{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:5px}
+.crm-meta{display:flex;gap:5px;flex-wrap:wrap}
+
+/* Revenue chart */
+.rev-chart-wrap{
+  background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:18px;
+}
+.rev-chart-head{display:flex;align-items:start;justify-content:space-between;margin-bottom:16px}
+.rev-total{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:400;color:var(--text);line-height:1}
+.rev-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.rev-delta{margin-top:6px}
+.rev-bars{display:flex;align-items:flex-end;gap:6px;height:120px}
+.rev-bar{flex:1;border-radius:4px 4px 0 0;cursor:pointer;position:relative;transition:opacity .2s}
+.rev-bar:hover{opacity:.75}
+.rev-bar-tip{
+  position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:var(--s4);border:1px solid var(--border2);border-radius:4px;
+  padding:4px 8px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text);
+  white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none;
+}
+.rev-bar:hover .rev-bar-tip{opacity:1}
+.rev-months{display:flex;gap:6px;margin-top:5px}
+.rev-month{flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--text4)}
+
+/* Notification card */
+.notif-card{
+  display:flex;align-items:start;gap:10px;
+  padding:10px 12px;border-radius:8px;
+  background:var(--s3);border:1px solid var(--border);
+  margin-bottom:6px;cursor:pointer;transition:border-color .15s;
+}
+.notif-card:hover{border-color:var(--border2)}
+.notif-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.notif-text{font-size:12px;color:var(--text2);line-height:1.4;flex:1}
+.notif-text strong{color:var(--text);font-weight:500}
+.notif-time{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);white-space:nowrap;margin-top:1px}
+
+/* Integration status */
+.integrations-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.integ-card{
+  background:var(--s2);border:1px solid var(--border);border-radius:10px;
+  padding:16px;text-align:center;
+}
+.integ-logo{font-size:24px;margin-bottom:8px}
+.integ-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px}
+.integ-status{font-size:10px;font-family:'DM Mono',monospace}
+.integ-status.connected{color:var(--green)}
+.integ-status.pending{color:var(--amber)}
+.integ-status.missing{color:var(--red)}
+.integ-desc{font-size:10px;color:var(--text3);margin-top:4px;line-height:1.4}
+
+/* Tooltip */
+[data-tip]{position:relative;cursor:help}
+[data-tip]:hover::after{
+  content:attr(data-tip);
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:var(--s4);border:1px solid var(--border2);border-radius:5px;
+  padding:5px 8px;font-size:10px;color:var(--text2);white-space:nowrap;z-index:50;
+  font-family:'DM Mono',monospace;
+}
+
+/* End padding */
+.end-pad{height:48px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ============================================================
+       SIDEBAR
+       Nota per integrazione: il nav item attivo viene settato
+       dinamicamente via navigate(). In Next.js usare
+       usePathname() per l'active state.
+       ============================================================ -->
+  <div class="sidebar">
+    <div class="sb-top">
+      <div class="sb-badge">ADMIN</div>
+      <div class="sb-logo">Ingegneria<br>della Narrativa</div>
+      <div class="sb-admin-user">
+        <div class="sb-av">A</div>
+        <div>
+          <div class="sb-uname">Admin</div>
+          <div class="sb-urole">SUPER_ADMIN</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-nav">
+      <div class="nav-group">Principale</div>
+      <!-- navigate('overview') → /admin -->
+      <div class="nav-item active" onclick="navigate('overview',this)">
+        <span class="ni-icon">◉</span><span class="ni-label">Overview</span>
+        <span class="ni-num green">live</span>
+      </div>
+
+      <div class="nav-group">Business</div>
+      <!-- navigate('finance') → /admin/finance
+           Dati da: Stripe API → payments, MRR, payouts
+           Supabase: SELECT sum(amount) FROM purchases -->
+      <div class="nav-item" onclick="navigate('finance',this)">
+        <span class="ni-icon">◈</span><span class="ni-label">Finance</span>
+        <span class="ni-num green">€</span>
+      </div>
+      <!-- navigate('crm') → /admin/crm
+           Dati da: Supabase leads + users table
+           CRM kanban: stranger→lead→trial→paid→churned -->
+      <div class="nav-item" onclick="navigate('crm',this)">
+        <span class="ni-icon">◎</span><span class="ni-label">CRM & Lead</span>
+        <span class="ni-num amber" id="nb-crm">12</span>
+      </div>
+      <!-- navigate('discounts') → /admin/discounts
+           Dati da: Stripe Coupons API + tabella discounts Supabase
+           Azioni: create/deactivate coupon via Stripe API -->
+      <div class="nav-item" onclick="navigate('discounts',this)">
+        <span class="ni-icon">◆</span><span class="ni-label">Sconti & Offerte</span>
+        <span class="ni-num blue">5</span>
+      </div>
+
+      <div class="nav-group">LMS</div>
+      <!-- navigate('students') → /admin/lms
+           Dati da: Supabase JOIN users + progress + purchases
+           Azioni: impersonate, sblocca modulo, reset progresso -->
+      <div class="nav-item" onclick="navigate('students',this)">
+        <span class="ni-icon">◐</span><span class="ni-label">Studenti</span>
+        <span class="ni-num green" id="nb-stu">24</span>
+      </div>
+      <!-- navigate('content') → /admin/content
+           Dati da: Supabase modules + lessons table
+           Video: Mux asset_id per ogni lezione
+           Azioni: riordina moduli (drag), pubblica/nascondi -->
+      <div class="nav-item" onclick="navigate('content',this)">
+        <span class="ni-icon">◑</span><span class="ni-label">Contenuto LMS</span>
+      </div>
+      <!-- navigate('emails') → /admin/emails
+           Dati da: Resend API (logs, stats, sequences)
+           Azioni: trigger manuale sequenza, preview template -->
+      <div class="nav-item" onclick="navigate('emails',this)">
+        <span class="ni-icon">○</span><span class="ni-label">Email & Sequenze</span>
+        <span class="ni-num blue">5 seq.</span>
+      </div>
+
+      <div class="nav-group">Sistema</div>
+      <!-- navigate('integrations') → /admin/integrations
+           Status di tutti i servizi esterni:
+           Stripe, Supabase, Resend, Mux, Plausible, Vercel -->
+      <div class="nav-item" onclick="navigate('integrations',this)">
+        <span class="ni-icon">⊕</span><span class="ni-label">Integrazioni</span>
+        <span class="ni-num amber">6</span>
+      </div>
+      <!-- navigate('settings') → /admin/settings -->
+      <div class="nav-item" onclick="navigate('settings',this)">
+        <span class="ni-icon">⊙</span><span class="ni-label">Impostazioni</span>
+      </div>
+    </div>
+
+    <!-- ENV VARS STATUS
+         In produzione: questo pannello legge process.env
+         e mostra quali variabili sono configurate su Vercel.
+         API route: /api/admin/env-check (server-side only) -->
+    <div class="sb-footer">
+      <div class="sb-env">
+        <div class="sb-env-label">ENV VARS</div>
+        <div class="sb-env-row">
+          <span class="sb-env-key">SUPABASE</span>
+          <span class="sb-env-val miss">missing</span>
+        </div>
+        <div class="sb-env-row">
+          <span class="sb-env-key">STRIPE</span>
+          <span class="sb-env-val miss">missing</span>
+        </div>
+        <div class="sb-env-row">
+          <span class="sb-env-key">RESEND</span>
+          <span class="sb-env-val miss">missing</span>
+        </div>
+        <div class="sb-env-row">
+          <span class="sb-env-key">MUX</span>
+          <span class="sb-env-val miss">missing</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MAIN CONTENT
+       ============================================================ -->
+  <div class="main">
+    <div class="topbar">
+      <div class="tb-bc">
+        <span>Admin</span>
+        <span class="tb-sep">›</span>
+        <span class="tb-cur" id="tb-cur">Overview</span>
+      </div>
+      <div class="live-dot"></div>
+      <span class="live-text">LIVE</span>
+      <div class="tb-right">
+        <button class="tb-btn" onclick="showModal('discount')">+ Sconto rapido</button>
+        <button class="tb-btn" onclick="navigate('students',document.querySelector('[onclick*=students]'))">👤 Studenti</button>
+        <button class="tb-btn primary" onclick="navigate('finance',document.querySelector('[onclick*=finance]'))">Finance →</button>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL — CREA SCONTO
+     In produzione: POST /api/admin/discounts → chiama
+     Stripe API: stripe.coupons.create({ percent_off, duration })
+     + INSERT into discounts (Supabase)
+     ============================================================ -->
+<div class="modal-overlay" id="modal-discount">
+  <div class="modal">
+    <div class="modal-close" onclick="closeModal('discount')">✕</div>
+    <div class="modal-title">Nuovo Sconto</div>
+    <div class="modal-sub">Crea un coupon Stripe e salvalo nel database</div>
+    <div class="form-group">
+      <label class="form-label">Codice coupon</label>
+      <input class="form-input" placeholder="es. BETA2025 · automatico su Stripe" id="disc-code"/>
+      <div class="form-hint">Stripe Coupon ID: stripe.coupons.create({ id: code })</div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Sconto %</label>
+        <input class="form-input" type="number" placeholder="30" id="disc-pct"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Scadenza</label>
+        <input class="form-input" type="date" id="disc-exp"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Applica a</label>
+      <select class="form-input" id="disc-plan">
+        <option>Tutti i piani</option>
+        <option>Solo Autonomo (€497)</option>
+        <option>Solo Accelerato (€1497)</option>
+        <option>Solo Intensivo (€4500)</option>
+      </select>
+      <div class="form-hint">In Stripe: applica il coupon al price_id corrispondente</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Usi massimi</label>
+      <input class="form-input" type="number" placeholder="50 · lascia vuoto per illimitato" id="disc-uses"/>
+      <div class="form-hint">Stripe: max_redemptions nel coupon object</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="tb-btn" onclick="closeModal('discount')" style="flex:1">Annulla</button>
+      <button class="tb-btn primary" onclick="createDiscount()" style="flex:2">Crea su Stripe + Salva →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL — DETTAGLIO STUDENTE
+     In produzione: GET /api/admin/students/[id]
+     → Supabase: SELECT * FROM users JOIN progress JOIN purchases
+     ============================================================ -->
+<div class="modal-overlay" id="modal-student">
+  <div class="modal">
+    <div class="modal-close" onclick="closeModal('student')">✕</div>
+    <div class="modal-title" id="ms-name">Marco Tiraboschi</div>
+    <div class="modal-sub" id="ms-email">marco@example.com · Piano Accelerato</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px" id="ms-kpi"></div>
+    <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:.1em;margin-bottom:8px;text-transform:uppercase">Progresso moduli</div>
+    <div id="ms-progress"></div>
+    <div style="display:flex;gap:6px;margin-top:18px">
+      <button class="tb-btn" style="flex:1">📧 Invia email</button>
+      <button class="tb-btn" style="flex:1">🔓 Sblocca modulo</button>
+      <button class="tb-btn danger" style="flex:1">Reset progresso</button>
+    </div>
+    <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:10px;text-align:center">
+      Supabase: UPDATE progress SET completed_at = null WHERE user_id = [id]
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA LAYER — MOCK DATA
+// In produzione: sostituire con fetch() alle API routes Next.js
+// che leggono da Supabase + Stripe
+//
+// Esempio:
+// const students = await supabase
+//   .from('users')
+//   .select('*, purchases(*), progress(*)')
+//   .order('created_at', { ascending: false })
+// ============================================================
+
+const DATA = {
+  // FINANCE
+  // Stripe API: stripe.charges.list() + stripe.paymentIntents.list()
+  // MRR: calcolato lato server, non da Stripe direttamente (one-time)
+  revenue: {
+    total: 18640,
+    thisMonth: 6250,
+    lastMonth: 4890,
+    projected: 9200,
+    // Mensili: da Supabase GROUP BY DATE_TRUNC('month', created_at)
+    monthly: [
+      {m:'Nov',v:800,h:18},
+      {m:'Dic',v:1200,h:27},
+      {m:'Gen',v:2100,h:47},
+      {m:'Feb',v:3200,h:71},
+      {m:'Mar',v:4890,h:109},
+      {m:'Apr',v:6450,h:144},
+    ],
+    // Breakdown per piano: Supabase GROUP BY plan
+    byPlan:[
+      {plan:'Autonomo',count:14,rev:6958,color:'var(--text3)'},
+      {plan:'Accelerato',count:8,rev:11976,color:'var(--gold)'},
+      {plan:'Intensivo',count:0,rev:0,color:'var(--purple)'},
+    ]
+  },
+
+  // STUDENTS
+  // Supabase: users JOIN purchases JOIN progress
+  students:[
+    {id:1,name:'Marco T.',email:'marco@tiraboschi.it',plan:'accelerato',progress:40,lastSeen:'2h fa',joined:'12 Mar',exDone:4,streak:5,lessons:6},
+    {id:2,name:'Sara L.',email:'sara@cloud.dev',plan:'accelerato',progress:87,lastSeen:'30 min fa',joined:'10 Mar',exDone:13,streak:12,lessons:13},
+    {id:3,name:'Alessandro R.',email:'ale@cto.io',plan:'intensivo',progress:100,lastSeen:'ieri',joined:'5 Mar',exDone:15,streak:0,lessons:15},
+    {id:4,name:'Giulia M.',email:'giulia@pm.it',plan:'autonomo',progress:20,lastSeen:'3 giorni fa',joined:'1 Apr',exDone:2,streak:0,lessons:3},
+    {id:5,name:'Davide F.',email:'davide@arch.it',plan:'autonomo',progress:53,lastSeen:'1h fa',joined:'28 Mar',exDone:7,streak:3,lessons:8},
+    {id:6,name:'Elena B.',email:'elena@sec.eu',plan:'accelerato',progress:67,lastSeen:'5h fa',joined:'15 Mar',exDone:9,streak:7,lessons:10},
+    {id:7,name:'Luca V.',email:'luca@lead.io',plan:'autonomo',progress:13,lastSeen:'1 sett.',joined:'8 Apr',exDone:1,streak:0,lessons:2},
+    {id:8,name:'Marta S.',email:'marta@infra.it',plan:'accelerato',progress:73,lastSeen:'3h fa',joined:'18 Mar',exDone:11,streak:9,lessons:11},
+  ],
+
+  // CRM LEADS
+  // Supabase: leads table con source (utm), status, created_at
+  // Integrazione: webhook da sales page form → INSERT leads
+  leads:{
+    stranger:[
+      {name:'—',email:'via LinkedIn post',source:'LinkedIn',date:'oggi'},
+      {name:'—',email:'via referral Davide F.',source:'Referral',date:'ieri'},
+      {name:'—',email:'newsletter signup',source:'Newsletter',date:'2gg fa'},
+    ],
+    lead:[
+      {name:'Paolo C.',email:'paolo@pm.eu',source:'LinkedIn',date:'3gg fa'},
+      {name:'Francesca N.',email:'fneri@cloud.it',source:'Google',date:'5gg fa'},
+      {name:'Roberto M.',email:'rob@sre.dev',source:'Referral',date:'1 sett.'},
+    ],
+    trial:[
+      {name:'Giorgio A.',email:'g.amoroso@ent.it',source:'LinkedIn',date:'10gg fa'},
+      {name:'Chiara L.',email:'ch.levi@cto.io',source:'Podcast',date:'12gg fa'},
+    ],
+    paid:[
+      {name:'Marco T.',email:'marco@tiraboschi.it',source:'LinkedIn',date:'12 Mar'},
+      {name:'Sara L.',email:'sara@cloud.dev',source:'Referral',date:'10 Mar'},
+    ]
+  },
+
+  // DISCOUNTS
+  // Stripe: stripe.coupons.list() + stripe.promotionCodes.list()
+  // Supabase: JOIN discounts per tracciare usi e assegnazioni
+  discounts:[
+    {code:'BETA2025',desc:'Beta tester — 30% off',pct:30,uses:8,maxUses:10,exp:'30 Apr',status:'active',plan:'Tutti'},
+    {code:'LAUNCH50',desc:'Lancio pubblico — 50% off',pct:50,uses:0,maxUses:50,exp:'15 Mag',status:'ready',plan:'Autonomo'},
+    {code:'INTENSIVO20',desc:'Sconto intensivo Q2',pct:20,uses:2,maxUses:null,exp:'30 Giu',status:'active',plan:'Intensivo'},
+    {code:'LINKEDIN',desc:'Campagna LinkedIn Apr',pct:25,uses:14,maxUses:null,exp:'30 Apr',status:'active',plan:'Tutti'},
+    {code:'WINTER24',desc:'Campagna invernale — scaduto',pct:40,uses:22,maxUses:30,exp:'31 Gen',status:'expired',plan:'Tutti'},
+  ],
+
+  // EMAILS
+  // Resend: resend.emails.list() + analytics per open rate
+  // Sequenze: gestite via Supabase + cron job o Inngest
+  emails:[
+    {seq:'welcome',name:'Benvenuto — Day 0',sent:24,opened:22,rate:92,trigger:'post-purchase webhook'},
+    {seq:'orientation',name:'Orientamento — Day 1',sent:24,opened:19,rate:79,trigger:'D+1 da acquisto'},
+    {seq:'first_exercise',name:'Primo Esercizio — Day 3',sent:20,opened:15,rate:75,trigger:'D+3 se ex. non consegnato'},
+    {seq:'checkin',name:'Check-in — Day 7',sent:18,opened:12,rate:67,trigger:'D+7'},
+    {seq:'push_final',name:'Push Finale — Day 14',sent:10,opened:7,rate:70,trigger:'D+14 se < 30% progresso'},
+  ],
+
+  // NOTIFICATIONS
+  // Real-time: Supabase Realtime subscription su purchases + leads
+  notifications:[
+    {type:'purchase',text:'<strong>Sara L.</strong> ha completato il Modulo 5',time:'14 min fa',color:'var(--green)'},
+    {type:'purchase',text:'Nuovo acquisto: <strong>Luca V.</strong> · Piano Autonomo · €497',time:'2h fa',color:'var(--gold)'},
+    {type:'lead',text:'Nuovo lead da LinkedIn — email non ancora catturata',time:'3h fa',color:'var(--blue)'},
+    {type:'coupon',text:'Coupon <strong>BETA2025</strong> usato — 2 usi rimanenti',time:'5h fa',color:'var(--amber)'},
+    {type:'alert',text:'Giulia M. non accede da 3 giorni — rischio churn',time:'ieri',color:'var(--red)'},
+  ]
+};
+
+// ============================================================
+// VIEWS
+// ============================================================
+
+// ── OVERVIEW ──────────────────────────────────────────────────
+function viewOverview(){
+  const totalStudents = DATA.students.length;
+  const avgProg = Math.round(DATA.students.reduce((a,s)=>a+s.progress,0)/totalStudents);
+  const atRisk = DATA.students.filter(s=>s.progress<30 && s.streak===0).length;
+  const completions = DATA.students.filter(s=>s.progress===100).length;
+
+  return `
+  <!-- NOTIFICHE REAL-TIME
+       In produzione: Supabase Realtime
+       const sub = supabase.channel('admin')
+         .on('postgres_changes', { table: 'purchases' }, handleNew)
+         .subscribe() -->
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:14px">
+    <div>
+      <div class="kpi-grid c4">
+        <div class="kpi" style="--kc:var(--gold)" data-tip="Supabase: SELECT sum(amount) FROM purchases">
+          <div class="kpi-label">Revenue totale</div>
+          <div class="kpi-val">€${DATA.revenue.total.toLocaleString()}</div>
+          <div class="kpi-sub"><span class="kpi-delta up">+28%</span> vs mese scorso</div>
+        </div>
+        <div class="kpi" style="--kc:var(--green)" data-tip="Supabase: SELECT count(*) FROM users WHERE plan != null">
+          <div class="kpi-label">Studenti attivi</div>
+          <div class="kpi-val">${totalStudents}</div>
+          <div class="kpi-sub"><span class="kpi-delta up">+3</span> questa settimana</div>
+        </div>
+        <div class="kpi" style="--kc:var(--blue)" data-tip="Supabase: SELECT avg(progress) FROM progress">
+          <div class="kpi-label">Progresso medio</div>
+          <div class="kpi-val">${avgProg}%</div>
+          <div class="kpi-sub"><span class="kpi-delta up">+5%</span> vs settimana scorsa</div>
+        </div>
+        <div class="kpi" style="--kc:var(--red)" data-tip="Studenti con progress < 30% e streak = 0">
+          <div class="kpi-label">A rischio churn</div>
+          <div class="kpi-val">${atRisk}</div>
+          <div class="kpi-sub"><span class="kpi-delta ${atRisk>2?'down':'flat'}">${atRisk} studenti</span></div>
+        </div>
+      </div>
+
+      <!-- REVENUE CHART
+           Dati: Supabase GROUP BY DATE_TRUNC('month', created_at)
+           Alternativa: Stripe API charges.list con range date -->
+      <div class="rev-chart-wrap">
+        <div class="rev-chart-head">
+          <div>
+            <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:.1em;margin-bottom:4px">REVENUE MENSILE</div>
+            <div class="rev-total">€${DATA.revenue.thisMonth.toLocaleString()}</div>
+            <div class="rev-sub">Aprile 2025 · Proiettato: €${DATA.revenue.projected.toLocaleString()}</div>
+            <div class="rev-delta"><span class="kpi-delta up">+28%</span> vs Marzo</div>
+          </div>
+          <div style="text-align:right">
+            ${DATA.revenue.byPlan.map(p=>`
+            <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:5px">
+              <span style="font-size:11px;color:var(--text3)">${p.plan}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text)">${p.count} iscritti</span>
+              <span style="font-family:'DM Mono',monospace;font-size:11px;color:${p.color}">€${p.rev.toLocaleString()}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+        <div class="rev-bars">
+          ${DATA.revenue.monthly.map(m=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+            <div class="rev-bar" style="width:100%;height:${m.h}px;background:var(--gold);opacity:.7">
+              <div class="rev-bar-tip">€${m.v.toLocaleString()}</div>
+            </div>
+            <div class="rev-month">${m.m}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- STUDENTI RECENTI -->
+      <div class="sec-hdr">
+        <div class="sec-line"></div>
+        <div class="sec-label">Studenti recenti</div>
+        <div class="sec-line"></div>
+        <span class="sec-action" onclick="navigate('students',document.querySelector('[onclick*=students]'))">Vedi tutti →</span>
+      </div>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Studente</th><th>Piano</th><th>Progresso</th><th>Streak</th><th>Ultimo accesso</th></tr></thead>
+          <tbody>
+            ${DATA.students.slice(0,5).map(s=>`
+            <tr onclick="openStudent(${s.id})">
+              <td><div class="cell-main">${s.name}</div><div class="cell-sub">${s.email}</div></td>
+              <td><span class="plan ${s.plan}">${s.plan}</span></td>
+              <td><div class="prog-mini"><div class="prog-mini-track"><div class="prog-mini-fill" style="width:${s.progress}%"></div></div><span class="prog-mini-val">${s.progress}%</span></div></td>
+              <td><span class="cell-mono">${s.streak > 0 ? '🔥 '+s.streak+'gg' : '—'}</span></td>
+              <td><span class="cell-mono">${s.lastSeen}</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COLONNA DESTRA -->
+    <div>
+      <!-- NOTIFICHE
+           In produzione: Supabase Realtime channel
+           supabase.channel('notifications').on('INSERT', ...) -->
+      <div class="sec-hdr" style="margin-top:0">
+        <div class="sec-line"></div>
+        <div class="sec-label">Attività recente</div>
+        <div class="sec-line"></div>
+      </div>
+      ${DATA.notifications.map(n=>`
+      <div class="notif-card">
+        <div class="notif-dot" style="background:${n.color}"></div>
+        <div class="notif-text">${n.text}</div>
+        <div class="notif-time">${n.time}</div>
+      </div>`).join('')}
+
+      <!-- PIANO ATTIVO -->
+      <div class="sec-hdr">
+        <div class="sec-line"></div>
+        <div class="sec-label">Build tracker</div>
+        <div class="sec-line"></div>
+        <span class="sec-action" onclick="navigate('integrations',document.querySelector('[onclick*=integrations]'))">Stato →</span>
+      </div>
+      ${[
+        {label:'Sales page',status:'done',file:'SALESPAGE.html'},
+        {label:'Corso completo (LMS)',status:'done',file:'COMPLETO.html'},
+        {label:'Dashboard studente',status:'done',file:'DASHBOARD.html'},
+        {label:'Admin dashboard',status:'done',file:'questo file'},
+        {label:'Stripe checkout',status:'pending'},
+        {label:'Supabase auth',status:'pending'},
+        {label:'Deploy Vercel',status:'pending'},
+        {label:'Dominio DNS',status:'pending'},
+        {label:'Email Resend',status:'pending'},
+        {label:'Video Mux',status:'pending'},
+      ].map(i=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--s2);border:1px solid var(--border);border-radius:6px;margin-bottom:5px">
+        <div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${i.status==='done'?'var(--green)':'var(--amber)'}"></div>
+        <span style="font-size:12px;color:${i.status==='done'?'var(--text2)':'var(--text3)'};flex:1">${i.label}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:${i.status==='done'?'var(--green)':'var(--amber)'}">${i.status==='done'?'✓ pronto':'pending'}</span>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ── FINANCE ───────────────────────────────────────────────────
+function viewFinance(){
+  return `
+  <!-- STRIPE INTEGRATION NOTE:
+       Tutti i dati di questa sezione vengono da Stripe API
+       server-side via /api/admin/finance Next.js route:
+       - stripe.charges.list({ limit: 100 })
+       - stripe.paymentIntents.list()
+       - Coupon usage: stripe.promotionCodes.list()
+       Combinati con Supabase per attributi utente (piano, email) -->
+
+  <div class="kpi-grid c4">
+    <div class="kpi" style="--kc:var(--gold)">
+      <div class="kpi-label">Revenue totale</div>
+      <div class="kpi-val">€${DATA.revenue.total.toLocaleString()}</div>
+      <div class="kpi-sub">dall'apertura</div>
+    </div>
+    <div class="kpi" style="--kc:var(--green)">
+      <div class="kpi-label">Questo mese</div>
+      <div class="kpi-val">€${DATA.revenue.thisMonth.toLocaleString()}</div>
+      <div class="kpi-sub"><span class="kpi-delta up">+28%</span> vs Marzo</div>
+    </div>
+    <div class="kpi" style="--kc:var(--blue)">
+      <div class="kpi-label">Ticket medio</div>
+      <div class="kpi-val">€${Math.round(DATA.revenue.total/DATA.students.length).toLocaleString()}</div>
+      <div class="kpi-sub">per studente</div>
+    </div>
+    <div class="kpi" style="--kc:var(--purple)">
+      <div class="kpi-label">Proiettato</div>
+      <div class="kpi-val">€${DATA.revenue.projected.toLocaleString()}</div>
+      <div class="kpi-sub">fine Aprile</div>
+    </div>
+  </div>
+
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Revenue per piano · Stripe breakdown</div><div class="sec-line"></div></div>
+  <div class="kpi-grid c3">
+    ${[
+      {plan:'Autonomo',price:'€497',count:14,total:'€6.958',color:'var(--text2)',id:'prod_autonomo'},
+      {plan:'Accelerato',price:'€1.497',count:8,total:'€11.976',color:'var(--gold)',id:'prod_accelerato'},
+      {plan:'Intensivo',price:'€4.500',count:0,total:'€0',color:'var(--purple)',id:'prod_intensivo'},
+    ].map(p=>`
+    <div class="kpi" style="--kc:${p.color}">
+      <div class="kpi-label">Piano ${p.plan}</div>
+      <div class="kpi-val" style="color:${p.color}">${p.total}</div>
+      <div class="kpi-sub">${p.count} acquisti · ${p.price} cad.</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text4);margin-top:6px">Stripe: ${p.id}</div>
+    </div>`).join('')}
+  </div>
+
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Transazioni recenti · Stripe payments</div><div class="sec-line"></div></div>
+  <div class="table-wrap">
+    <!-- In produzione: stripe.paymentIntents.list({ limit: 20 })
+         JOIN con Supabase per nome/email -->
+    <div class="table-head">
+      <div><div class="table-title">Pagamenti</div><div class="table-sub">Ultimi 20 · da Stripe API</div></div>
+      <div class="table-actions">
+        <button class="tb-btn">↓ Esporta CSV</button>
+        <button class="tb-btn">Stripe Dashboard ↗</button>
+      </div>
+    </div>
+    <table class="data">
+      <thead><tr><th>Data</th><th>Cliente</th><th>Piano</th><th>Importo</th><th>Coupon</th><th>Stripe ID</th><th>Stato</th></tr></thead>
+      <tbody>
+        ${[
+          {date:'10 Apr',name:'Luca V.',plan:'autonomo',amount:'€497',coupon:'—',id:'pi_3P...a1b2',status:'succeeded'},
+          {date:'09 Apr',name:'Marta S.',plan:'accelerato',amount:'€1.347',coupon:'BETA2025 -10%',id:'pi_3P...c3d4',status:'succeeded'},
+          {date:'05 Apr',name:'Elena B.',plan:'accelerato',amount:'€1.497',coupon:'—',id:'pi_3P...e5f6',status:'succeeded'},
+          {date:'01 Apr',name:'Giulia M.',plan:'autonomo',amount:'€373',coupon:'LAUNCH50 -25%',id:'pi_3P...g7h8',status:'succeeded'},
+          {date:'28 Mar',name:'Davide F.',plan:'autonomo',amount:'€497',coupon:'—',id:'pi_3P...i9j0',status:'succeeded'},
+        ].map(t=>`
+        <tr>
+          <td class="cell-mono">${t.date}</td>
+          <td><div class="cell-main">${t.name}</div></td>
+          <td><span class="plan ${t.plan}">${t.plan}</span></td>
+          <td><span class="cell-mono" style="color:var(--green)">${t.amount}</span></td>
+          <td><span class="cell-mono" style="font-size:10px;color:${t.coupon!=='—'?'var(--amber)':'var(--text3)'}">${t.coupon}</span></td>
+          <td><span class="cell-mono" style="font-size:10px">${t.id}</span></td>
+          <td><span class="badge green">${t.status}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ── STUDENTS / LMS ────────────────────────────────────────────
+function viewStudents(){
+  return `
+  <!-- LMS INTEGRATION NOTE:
+       Dati da Supabase:
+       SELECT u.*, p.plan, p.amount,
+              count(pr.id) as lessons_done,
+              max(pr.completed_at) as last_activity
+       FROM users u
+       JOIN purchases p ON p.user_id = u.id
+       LEFT JOIN progress pr ON pr.user_id = u.id AND pr.completed = true
+       GROUP BY u.id, p.plan, p.amount
+       ORDER BY last_activity DESC -->
+
+  <div class="kpi-grid c4">
+    <div class="kpi" style="--kc:var(--green)">
+      <div class="kpi-label">Totale studenti</div>
+      <div class="kpi-val">${DATA.students.length}</div>
+      <div class="kpi-sub">tutti i piani</div>
+    </div>
+    <div class="kpi" style="--kc:var(--gold)">
+      <div class="kpi-label">Piano Accelerato</div>
+      <div class="kpi-val">${DATA.students.filter(s=>s.plan==='accelerato').length}</div>
+      <div class="kpi-sub">€1.497 cad.</div>
+    </div>
+    <div class="kpi" style="--kc:var(--purple)">
+      <div class="kpi-label">Piano Intensivo</div>
+      <div class="kpi-val">${DATA.students.filter(s=>s.plan==='intensivo').length}</div>
+      <div class="kpi-sub">€4.500 cad.</div>
+    </div>
+    <div class="kpi" style="--kc:var(--red)">
+      <div class="kpi-label">A rischio churn</div>
+      <div class="kpi-val">${DATA.students.filter(s=>s.progress<30&&s.streak===0).length}</div>
+      <div class="kpi-sub">< 30% progresso · streak 0</div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input class="search-input" placeholder="🔍 Cerca per nome o email..." oninput="filterStudents(this.value)"/>
+    <select class="filter-select" onchange="filterStudents('')">
+      <option>Tutti i piani</option>
+      <option>autonomo</option>
+      <option>accelerato</option>
+      <option>intensivo</option>
+    </select>
+    <button class="tb-btn">↓ Esporta</button>
+    <button class="tb-btn primary">+ Aggiungi manuale</button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="data" id="students-table">
+      <thead><tr><th>Studente</th><th>Piano</th><th>Progresso</th><th>Lezioni</th><th>Esercizi</th><th>Streak</th><th>Iscritto</th><th>Ultimo accesso</th><th></th></tr></thead>
+      <tbody id="students-body">
+        ${DATA.students.map(s=>`
+        <tr onclick="openStudent(${s.id})">
+          <td><div class="cell-main">${s.name}</div><div class="cell-sub">${s.email}</div></td>
+          <td><span class="plan ${s.plan}">${s.plan}</span></td>
+          <td><div class="prog-mini"><div class="prog-mini-track"><div class="prog-mini-fill" style="width:${s.progress}%"></div></div><span class="prog-mini-val">${s.progress}%</span></div></td>
+          <td class="cell-mono">${s.lessons}/15</td>
+          <td class="cell-mono">${s.exDone}/15</td>
+          <td class="cell-mono">${s.streak>0?'🔥 '+s.streak:'—'}</td>
+          <td class="cell-mono">${s.joined}</td>
+          <td class="cell-mono">${s.lastSeen}</td>
+          <td><button class="tb-btn" style="padding:3px 8px;font-size:10px" onclick="event.stopPropagation();openStudent(${s.id})">Dettagli</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ── DISCOUNTS ─────────────────────────────────────────────────
+function viewDiscounts(){
+  return `
+  <!-- STRIPE DISCOUNTS INTEGRATION:
+       Crea coupon: stripe.coupons.create({ percent_off, duration: 'once', max_redemptions })
+       Crea promo code: stripe.promotionCodes.create({ coupon: coupon.id, code: 'BETA2025' })
+       Applica al checkout: aggiungi ?coupon=BETA2025 all'URL di Stripe Checkout
+       Supabase: tabella discounts per tracciare usi e associare a utenti -->
+
+  <div class="kpi-grid c4">
+    <div class="kpi" style="--kc:var(--gold)">
+      <div class="kpi-label">Coupon attivi</div>
+      <div class="kpi-val">${DATA.discounts.filter(d=>d.status==='active').length}</div>
+      <div class="kpi-sub">su Stripe</div>
+    </div>
+    <div class="kpi" style="--kc:var(--green)">
+      <div class="kpi-label">Usi totali</div>
+      <div class="kpi-val">${DATA.discounts.reduce((a,d)=>a+d.uses,0)}</div>
+      <div class="kpi-sub">codici riscattati</div>
+    </div>
+    <div class="kpi" style="--kc:var(--red)">
+      <div class="kpi-label">Revenue persa</div>
+      <div class="kpi-val">€${(DATA.discounts.reduce((a,d)=>a+(d.uses*(d.pct/100)*500),0)).toFixed(0)}</div>
+      <div class="kpi-sub">da sconti applicati</div>
+    </div>
+    <div class="kpi" style="--kc:var(--blue)">
+      <div class="kpi-label">Conversione coupon</div>
+      <div class="kpi-val">34%</div>
+      <div class="kpi-sub">lead con coupon → acquisto</div>
+    </div>
+  </div>
+
+  <div class="sec-hdr">
+    <div class="sec-line"></div><div class="sec-label">Coupon attivi</div><div class="sec-line"></div>
+    <button class="tb-btn primary" onclick="showModal('discount')">+ Nuovo coupon →</button>
+  </div>
+
+  ${DATA.discounts.map(d=>`
+  <div class="discount-card" style="margin-bottom:8px;${d.status==='expired'?'opacity:.45':''}">
+    <div class="dc-code">${d.code}</div>
+    <div class="dc-info">
+      <div class="dc-name">${d.desc}</div>
+      <div class="dc-meta">
+        <span>🏷 -${d.pct}%</span>
+        <span>👥 ${d.uses}${d.maxUses?'/'+d.maxUses:''} usi</span>
+        <span>📅 scade ${d.exp}</span>
+        <span>🎯 ${d.plan}</span>
+      </div>
+    </div>
+    <div style="text-align:right;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-right:8px">
+      ${d.maxUses?`<div style="margin-bottom:4px">${Math.round(d.uses/d.maxUses*100)}% usato</div>
+      <div style="height:3px;width:80px;background:var(--border2);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${Math.round(d.uses/(d.maxUses||1)*100)}%;background:${d.status==='active'?'var(--gold)':'var(--text3)'}"></div>
+      </div>`:'illimitato'}
+    </div>
+    <div class="dc-actions">
+      <span class="badge ${d.status==='active'?'green':d.status==='ready'?'blue':'gray'}">${d.status}</span>
+      <button class="tb-btn" style="padding:3px 8px;font-size:10px">Copia link</button>
+      ${d.status!=='expired'?`<button class="tb-btn danger" style="padding:3px 8px;font-size:10px">Disattiva</button>`:''}
+    </div>
+  </div>`).join('')}
+
+  <div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-top:16px">
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:.1em;margin-bottom:8px">INTEGRAZIONE STRIPE — FLUSSO COUPON</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);line-height:2">
+      1. Admin crea coupon → POST /api/admin/discounts → stripe.coupons.create()<br>
+      2. Link checkout con coupon: stripe.checkout.sessions.create({ discounts: [{ coupon }] })<br>
+      3. Webhook Stripe: checkout.session.completed → salva su Supabase<br>
+      4. Sales page: input coupon → validazione real-time via /api/validate-coupon
+    </div>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ── CRM ───────────────────────────────────────────────────────
+function viewCRM(){
+  const cols = [
+    {key:'stranger',label:'Visitatori',color:'var(--text3)',badge:'gray'},
+    {key:'lead',label:'Lead',color:'var(--blue)',badge:'blue'},
+    {key:'trial',label:'In valutazione',color:'var(--amber)',badge:'amber'},
+    {key:'paid',label:'Clienti',color:'var(--green)',badge:'green'},
+  ];
+  return `
+  <!-- CRM INTEGRATION NOTE:
+       Supabase tabella leads: { id, email, name, source, status, created_at }
+       Status flow: stranger → lead → trial → paid → churned
+       Trigger leads:
+       - Sales page: form email capture → INSERT leads (source: 'salespage')
+       - LinkedIn: UTM params → INSERT leads (source: 'linkedin')
+       - Stripe webhook: checkout.completed → UPDATE leads SET status='paid'
+       Resend: trigger email sequence on status change -->
+
+  <div class="kpi-grid c4">
+    ${cols.map(c=>`
+    <div class="kpi" style="--kc:${c.color}">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-val">${DATA.leads[c.key].length}</div>
+      <div class="kpi-sub">nel funnel</div>
+    </div>`).join('')}
+  </div>
+
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Funnel Kanban · Supabase leads table</div><div class="sec-line"></div></div>
+  <div class="funnel-cols">
+    ${cols.map(c=>`
+    <div class="funnel-col">
+      <div class="funnel-col-hdr">
+        <span class="funnel-col-name">${c.label}</span>
+        <span class="funnel-col-count ni-num ${c.badge}">${DATA.leads[c.key].length}</span>
+      </div>
+      ${DATA.leads[c.key].map(l=>`
+      <div class="crm-card">
+        <div class="crm-name">${l.name||'Anonimo'}</div>
+        <div class="crm-email">${l.email}</div>
+        <div class="crm-meta">
+          <span class="badge ${c.badge}" style="font-size:9px">${l.source}</span>
+          <span style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace">${l.date}</span>
+        </div>
+      </div>`).join('')}
+      <button class="tb-btn" style="width:100%;margin-top:6px;font-size:10px">+ Aggiungi</button>
+    </div>`).join('')}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ── CONTENT ───────────────────────────────────────────────────
+function viewContent(){
+  const modules = [
+    {num:'01',name:'Le Fondamenta',color:'var(--teal)',lessons:['L1.1 Illusione del Valore','L1.2 Matrice Audience','L1.3 Ribaltamento Sound Ambassador'],status:'published'},
+    {num:'02',name:'Architettura della Storia',color:'var(--blue)',lessons:['L2.1 Viaggio dell\'Eroe','L2.2 Tecnica del Contrasto','L2.3 Il Dettaglio Letale'],status:'published'},
+    {num:'03',name:'Storytelling Tattico',color:'var(--amber)',lessons:['L3.1 Email come Arma','L3.2 Copywriting LinkedIn','L3.3 Creare il Dossier'],status:'published'},
+    {num:'04',name:'Presenza Scenica',color:'var(--coral)',lessons:['L4.1 Prossemica Digitale','L4.2 Modulazione Vocale','L4.3 Gestione Obiezione'],status:'published'},
+    {num:'05',name:'La Monetizzazione',color:'var(--green)',lessons:['L5.1 Pacchettizzare','L5.2 Costruire l\'Impero SaaS','L5.3 Posizionamento Premium'],status:'published'},
+  ];
+  return `
+  <!-- CONTENT MANAGEMENT INTEGRATION:
+       Supabase tabelle: modules + lessons + assets
+       Video: Mux API → mux.video.assets.create()
+       Upload video: signed URL da Mux → upload diretto da browser
+       Supabase storage: PDF, slide, template
+       Ordine moduli: drag-and-drop → UPDATE modules SET order_index = [new_order] -->
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div>
+      <div style="font-size:14px;font-weight:500;color:var(--text)">Gestione Contenuto LMS</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">5 moduli · 15 lezioni · Tutti pubblicati</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="tb-btn">+ Nuovo modulo</button>
+      <button class="tb-btn primary">+ Carica video lezione</button>
+    </div>
+  </div>
+
+  ${modules.map(m=>`
+  <div class="content-card">
+    <div class="cc-order">⠿</div>
+    <div class="cc-icon" style="background:${m.color}22;border-color:${m.color}44;color:${m.color}">M${m.num}</div>
+    <div class="cc-info">
+      <div class="cc-title">Modulo ${m.num} — ${m.name}</div>
+      <div class="cc-meta">
+        ${m.lessons.map(l=>`<span>• ${l}</span>`).join('')}
+      </div>
+    </div>
+    <div class="cc-actions">
+      <span class="badge green">${m.status}</span>
+      <button class="tb-btn" style="padding:3px 8px;font-size:10px">Modifica</button>
+      <button class="tb-btn" style="padding:3px 8px;font-size:10px">+ Lezione</button>
+    </div>
+  </div>`).join('')}
+
+  <div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-top:16px">
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:.1em;margin-bottom:8px">MUX VIDEO INTEGRATION</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);line-height:2">
+      Upload: mux.video.uploads.create({ cors_origin: process.env.NEXT_PUBLIC_URL })<br>
+      Playback: &lt;MuxPlayer playbackId={lesson.mux_playback_id} /&gt;<br>
+      Progress tracking: onTimeUpdate → debounce → UPDATE progress SET watch_pct<br>
+      Supabase: lessons.mux_asset_id + mux_playback_id per ogni lezione
+    </div>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ── EMAILS ────────────────────────────────────────────────────
+function viewEmails(){
+  return `
+  <!-- RESEND INTEGRATION:
+       npm install resend
+       import { Resend } from 'resend'
+       const resend = new Resend(process.env.RESEND_API_KEY)
+       
+       Sequenza trigger (via Supabase + cron o Inngest):
+       Day 0: Stripe webhook → checkout.completed → send welcome
+       Day 1: cron job → SELECT users WHERE purchased_at = yesterday → send orientation
+       Day 3: cron → check if first exercise submitted → if not, send push
+       Day 7: cron → send checkin
+       Day 14: cron → SELECT users WHERE progress < 30 → send push_final -->
+
+  <div class="kpi-grid c3">
+    <div class="kpi" style="--kc:var(--blue)">
+      <div class="kpi-label">Email inviate</div>
+      <div class="kpi-val">${DATA.emails.reduce((a,e)=>a+e.sent,0)}</div>
+      <div class="kpi-sub">totale sequenze</div>
+    </div>
+    <div class="kpi" style="--kc:var(--green)">
+      <div class="kpi-label">Open rate medio</div>
+      <div class="kpi-val">${Math.round(DATA.emails.reduce((a,e)=>a+e.rate,0)/DATA.emails.length)}%</div>
+      <div class="kpi-sub">benchmark settore: 22%</div>
+    </div>
+    <div class="kpi" style="--kc:var(--gold)">
+      <div class="kpi-label">Sequenze attive</div>
+      <div class="kpi-val">${DATA.emails.length}</div>
+      <div class="kpi-sub">via Resend API</div>
+    </div>
+  </div>
+
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Sequenze onboarding · Resend</div><div class="sec-line"></div></div>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Sequenza</th><th>Nome</th><th>Inviate</th><th>Aperte</th><th>Open rate</th><th>Trigger</th><th></th></tr></thead>
+      <tbody>
+        ${DATA.emails.map(e=>`
+        <tr>
+          <td class="cell-mono">${e.seq}</td>
+          <td class="cell-main">${e.name}</td>
+          <td class="cell-mono">${e.sent}</td>
+          <td class="cell-mono">${e.opened}</td>
+          <td>
+            <div class="prog-mini">
+              <div class="prog-mini-track"><div class="prog-mini-fill" style="width:${e.rate}%;background:var(--blue)"></div></div>
+              <span class="prog-mini-val">${e.rate}%</span>
+            </div>
+          </td>
+          <td style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${e.trigger}</td>
+          <td style="display:flex;gap:4px">
+            <button class="tb-btn" style="padding:3px 8px;font-size:10px">Preview</button>
+            <button class="tb-btn primary" style="padding:3px 8px;font-size:10px">Test →</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ── INTEGRATIONS ──────────────────────────────────────────────
+function viewIntegrations(){
+  const integs = [
+    {logo:'▲',name:'Vercel',status:'pending',desc:'Deploy Next.js. Collega repo GitHub → auto-deploy on push. ENV vars nel dashboard Vercel.'},
+    {logo:'🗄',name:'Supabase',status:'pending',desc:'DB + Auth + Storage + Realtime. Crea progetto → copia SUPABASE_URL e ANON_KEY.'},
+    {logo:'💳',name:'Stripe',status:'pending',desc:'Pagamenti + webhook. Crea 3 Products. Webhook endpoint: /api/stripe/webhook'},
+    {logo:'✉',name:'Resend',status:'pending',desc:'Email transazionali. Verifica dominio DNS → API key → template React Email.'},
+    {logo:'▶',name:'Mux',status:'pending',desc:'Video streaming lezioni. Upload via API → Playback via MuxPlayer React component.'},
+    {logo:'📊',name:'Plausible',status:'pending',desc:'Analytics privacy-first. Script tag nel layout + goal tracking per conversioni.'},
+  ];
+  return `
+  <!-- INTEGRATION SETUP CHECKLIST
+       Ordine consigliato di setup:
+       1. Supabase → schema + auth
+       2. Stripe → products + webhook
+       3. Vercel → deploy + env vars
+       4. Resend → DNS + templates
+       5. Mux → upload video lezioni
+       6. Plausible → tracking -->
+
+  <div class="sec-hdr" style="margin-top:0"><div class="sec-line"></div><div class="sec-label">Stato integrazioni</div><div class="sec-line"></div></div>
+  <div class="integrations-grid">
+    ${integs.map(i=>`
+    <div class="integ-card">
+      <div class="integ-logo">${i.logo}</div>
+      <div class="integ-name">${i.name}</div>
+      <div class="integ-status ${i.status}">${i.status==='connected'?'✓ Connesso':i.status==='pending'?'⚡ Da configurare':'✕ Errore'}</div>
+      <div class="integ-desc">${i.desc}</div>
+    </div>`).join('')}
+  </div>
+
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Checklist setup produzione</div><div class="sec-line"></div></div>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>#</th><th>Task</th><th>Servizio</th><th>Comando / Action</th><th>Stato</th></tr></thead>
+      <tbody>
+        ${[
+          {n:1,task:'Crea progetto Supabase',svc:'Supabase',cmd:'supabase.com → New project',s:'todo'},
+          {n:2,task:'Esegui schema SQL',svc:'Supabase',cmd:'Incolla schema da comments → SQL Editor',s:'todo'},
+          {n:3,task:'Configura Supabase Auth (email + Google)',svc:'Supabase',cmd:'Authentication → Providers',s:'todo'},
+          {n:4,task:'Crea 3 Stripe Products',svc:'Stripe',cmd:'stripe products create --name "Autonomo" --price 49700',s:'todo'},
+          {n:5,task:'Configura Stripe webhook',svc:'Stripe',cmd:'Endpoint: /api/stripe/webhook · Event: checkout.session.completed',s:'todo'},
+          {n:6,task:'Collega repo GitHub a Vercel',svc:'Vercel',cmd:'vercel.com → New Project → Import repo',s:'todo'},
+          {n:7,task:'Aggiungi ENV vars su Vercel',svc:'Vercel',cmd:'Project Settings → Environment Variables',s:'todo'},
+          {n:8,task:'Verifica dominio su Resend',svc:'Resend',cmd:'Domains → Add → copia TXT record in DNS',s:'todo'},
+          {n:9,task:'Configura dominio custom su Vercel',svc:'Vercel',cmd:'Domains → Add → punta DNS a cname.vercel-dns.com',s:'todo'},
+          {n:10,task:'Crea Mux account e primo asset',svc:'Mux',cmd:'mux.com → Access Token → first upload',s:'todo'},
+          {n:11,task:'Aggiungi script Plausible',svc:'Plausible',cmd:'<Script src="https://plausible.io/js/script.js" data-domain="tuodominio.com"/>',s:'todo'},
+        ].map(t=>`
+        <tr>
+          <td class="cell-mono">${t.n}</td>
+          <td class="cell-main">${t.task}</td>
+          <td><span class="badge blue" style="font-size:9px">${t.svc}</span></td>
+          <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${t.cmd}</td>
+          <td><span class="badge ${t.s==='done'?'green':'gray'}">${t.s==='done'?'fatto':'da fare'}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+function viewSettings(){
+  return `
+  <div class="kpi-grid c3">
+    <div class="kpi" style="--kc:var(--gold)"><div class="kpi-label">Versione</div><div class="kpi-val" style="font-size:24px">v1.0</div><div class="kpi-sub">sviluppo locale</div></div>
+    <div class="kpi" style="--kc:var(--green)"><div class="kpi-label">Ambiente</div><div class="kpi-val" style="font-size:24px">DEV</div><div class="kpi-sub">localhost</div></div>
+    <div class="kpi" style="--kc:var(--blue)"><div class="kpi-label">Framework</div><div class="kpi-val" style="font-size:24px">Next</div><div class="kpi-sub">14 App Router</div></div>
+  </div>
+  <div class="sec-hdr"><div class="sec-line"></div><div class="sec-label">Configurazione corso</div><div class="sec-line"></div></div>
+  <div class="table-wrap" style="padding:20px">
+    ${[
+      {label:'Nome corso','val':'Ingegneria della Narrativa'},
+      {label:'Piani disponibili','val':'Autonomo €497 · Accelerato €1497 · Intensivo €4500'},
+      {label:'Garanzia','val':'14 giorni soddisfatti o rimborsati'},
+      {label:'Moduli','val':'5 (tutti pubblicati)'},
+      {label:'Supporto email','val':'supporto@ingegneriadellanarrtiva.com (via Resend)'},
+    ].map(r=>`
+    <div style="display:flex;gap:16px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--text3);min-width:180px;font-family:'DM Mono',monospace;font-size:11px">${r.label}</span>
+      <span style="font-size:13px;color:var(--text)">${r.val}</span>
+    </div>`).join('')}
+  </div>
+  <div class="end-pad"></div>`;
+}
+
+// ============================================================
+// NAVIGATION + MODALS + HELPERS
+// ============================================================
+const VIEW_MAP = {
+  overview:viewOverview,
+  finance:viewFinance,
+  crm:viewCRM,
+  discounts:viewDiscounts,
+  students:viewStudents,
+  content:viewContent,
+  emails:viewEmails,
+  integrations:viewIntegrations,
+  settings:viewSettings,
+};
+
+const LABELS = {
+  overview:'Overview',finance:'Finance',crm:'CRM & Lead',
+  discounts:'Sconti & Offerte',students:'Studenti LMS',
+  content:'Contenuto LMS',emails:'Email & Sequenze',
+  integrations:'Integrazioni',settings:'Impostazioni',
+};
+
+function navigate(view, navEl){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  else{
+    const el = document.querySelector(`[onclick*="'${view}'"]`);
+    if(el) el.classList.add('active');
+  }
+  document.getElementById('tb-cur').textContent = LABELS[view]||view;
+  document.getElementById('content').scrollTo(0,0);
+  const renderer = VIEW_MAP[view];
+  document.getElementById('content').innerHTML = renderer ? renderer() : '<div style="padding:40px;text-align:center;color:var(--text3)">In sviluppo</div>';
+}
+
+function openStudent(id){
+  const s = DATA.students.find(x=>x.id===id);
+  if(!s) return;
+  document.getElementById('ms-name').textContent=s.name;
+  document.getElementById('ms-email').textContent=s.email+' · Piano '+s.plan;
+  document.getElementById('ms-kpi').innerHTML=[
+    {l:'Progresso',v:s.progress+'%',c:'var(--green)'},
+    {l:'Lezioni',v:s.lessons+'/15',c:'var(--blue)'},
+    {l:'Esercizi',v:s.exDone+'/15',c:'var(--gold)'},
+  ].map(k=>`<div style="background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center">
+    <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--text3);margin-bottom:4px">${k.l}</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:${k.c}">${k.v}</div>
+  </div>`).join('');
+  document.getElementById('ms-progress').innerHTML=`<div style="height:6px;background:var(--border2);border-radius:3px;overflow:hidden"><div style="height:100%;width:${s.progress}%;background:var(--green);border-radius:3px"></div></div><div style="text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-top:4px">${s.progress}% completato</div>`;
+  showModal('student');
+}
+
+function showModal(id){document.getElementById('modal-'+id).classList.add('open')}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open')}
+
+function createDiscount(){
+  const code = document.getElementById('disc-code').value||'AUTO'+Math.random().toString(36).substr(2,6).toUpperCase();
+  alert(`✓ Coupon creato!\n\nCodice: ${code}\nSconto: ${document.getElementById('disc-pct').value||'?'}%\n\nIn produzione:\nPOST /api/admin/discounts\n→ stripe.coupons.create()\n→ INSERT discounts (Supabase)`);
+  closeModal('discount');
+}
+
+function filterStudents(q){
+  const rows = document.querySelectorAll('#students-body tr');
+  rows.forEach(r=>{
+    r.style.display = r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';
+  });
+}
+
+// Chiudi modal cliccando fuori
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')});
+});
+
+// ── INIT ──────────────────────────────────────────────────────
+navigate('overview');
+</script>
+</body>
+</html>
